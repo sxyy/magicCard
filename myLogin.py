@@ -90,9 +90,12 @@ class MyLogin(wx.Frame):
             mystr = configFile.readline()
             if  str(constant.USERNAME) in mystr:
                 constant.COLLECTTHEMEID = int(configFile.readline().split('=')[1])
+                constant.COLLECTTHEMEID2 = int(configFile.readline().split('=')[1])
                 constant.STEALFRIEND = int(configFile.readline().split('=')[1])
                 constant.QQSHOWSELECT = int(configFile.readline().split('=')[1])
                 constant.QQSHOWID = int(configFile.readline().split('=')[1])
+                constant.QQSHOWSELECT2 = int(configFile.readline().split('=')[1])
+                constant.QQSHOWID2 = int(configFile.readline().split('=')[1])
                 try:
                     constant.STEALFRIEND2 = int(configFile.readline().split('=')[1])
                 except Exception:

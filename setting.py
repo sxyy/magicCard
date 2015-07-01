@@ -16,21 +16,37 @@ class Setting(wx.Frame):
     
         #-------------炉子操作----------
         sb  = wx.StaticBox(self,label = u'需要操作的套卡')
-        self.sloveOperateSizer = wx.StaticBoxSizer(sb,wx.HORIZONTAL)
-        self.cardLabel = wx.StaticText(self,-1,u'卡片')
+        self.sloveOperateSizer = wx.StaticBoxSizer(sb, wx.VERTICAL)
+
+        # 第一套卡片
+        self.cardOneSizer = wx.BoxSizer(wx.HORIZONTAL);
+        self.cardLabel = wx.StaticText(self, -1, u'卡片1')
         self.collectThemeChoice = wx.Choice(self,-1,(50,400),wx.DefaultSize,self.getCollectTheme())
         self.collectThemeChoice.Bind(wx.EVT_CHOICE,self.setThemeSelect)
         self.qqShowChoice = wx.Choice(self,-1,(50,400),wx.DefaultSize,[])
         self.qqShowChoice.Bind(wx.EVT_CHOICE,self.setQQShowSelect)
         self.qqShowImage=wx.StaticBitmap(self, -1,  pos=(30,50), size=(300,300))
         self.qqShowLabel = wx.StaticText(self,-1,u'Q秀')
-        
-        
-        
-        self.sloveOperateSizer.Add(self.cardLabel,0,wx.ALL,5)
-        self.sloveOperateSizer.Add(self.collectThemeChoice,0,wx.ALL,5)
-        self.sloveOperateSizer.Add(self.qqShowLabel,0,wx.ALL,5)
-        self.sloveOperateSizer.Add(self.qqShowChoice,0,wx.ALL,5)
+        self.cardOneSizer.Add(self.cardLabel, 0, wx.ALL, 5)
+        self.cardOneSizer.Add(self.collectThemeChoice, 0, wx.ALL, 5)
+        self.cardOneSizer.Add(self.qqShowLabel, 0, wx.ALL, 5)
+        self.cardOneSizer.Add(self.qqShowChoice, 0, wx.ALL, 5)
+
+        # 第二套卡片
+        self.cardOneSizer2 = wx.BoxSizer(wx.HORIZONTAL);
+        self.cardLabel2 = wx.StaticText(self, -1, u'卡片2')
+        self.collectThemeChoice2 = wx.Choice(self, -1, (50, 400), wx.DefaultSize, self.getCollectTheme())
+        self.collectThemeChoice2.Bind(wx.EVT_CHOICE, self.setThemeSelect2)
+        self.qqShowChoice2 = wx.Choice(self, -1, (50, 400), wx.DefaultSize, [])
+        self.qqShowLabel2 = wx.StaticText(self, -1, u'Q秀')
+        self.cardOneSizer2.Add(self.cardLabel2, 0, wx.ALL, 5)
+        self.cardOneSizer2.Add(self.collectThemeChoice2, 0, wx.ALL, 5)
+        self.cardOneSizer2.Add(self.qqShowLabel2, 0, wx.ALL, 5)
+        self.cardOneSizer2.Add(self.qqShowChoice2, 0, wx.ALL, 5)
+
+        self.sloveOperateSizer.Add(self.cardOneSizer, 0, wx.ALL, 5)
+        self.sloveOperateSizer.Add(self.cardOneSizer2, 0, wx.ALL, 5)
+
 
 
 
@@ -55,20 +71,20 @@ class Setting(wx.Frame):
         self.stealSizer.Add(self.friendSizer, 0,wx.ALL,5)
 
         #-------------炼卡模式----------
-        sb = wx.StaticBox(self,label = u'炼卡模式')
-        self.refinedCardModeSizer = wx.StaticBoxSizer(sb,wx.HORIZONTAL)
-        self.radio1 = wx.RadioButton(self, -1, u"普通炼卡", wx.DefaultPosition, style=wx.RB_GROUP)
-        self.radio2 = wx.RadioButton(self, -1, "Ernie", wx.DefaultPosition)
-        self.radio3 = wx.RadioButton(self, -1, "Bert", wx.DefaultPosition)
-        self.refinedCardModeSizer.Add(self.radio1,0,wx.ALL,5)
-        self.refinedCardModeSizer.Add(self.radio2,0,wx.ALL,5)
-        self.refinedCardModeSizer.Add(self.radio3,0,wx.ALL,5)
+        # sb = wx.StaticBox(self,label = u'炼卡模式')
+        # self.refinedCardModeSizer = wx.StaticBoxSizer(sb,wx.HORIZONTAL)
+        # self.radio1 = wx.RadioButton(self, -1, u"普通炼卡", wx.DefaultPosition, style=wx.RB_GROUP)
+        # self.radio2 = wx.RadioButton(self, -1, "Ernie", wx.DefaultPosition)
+        # self.radio3 = wx.RadioButton(self, -1, "Bert", wx.DefaultPosition)
+        # self.refinedCardModeSizer.Add(self.radio1,0,wx.ALL,5)
+        # self.refinedCardModeSizer.Add(self.radio2,0,wx.ALL,5)
+        # self.refinedCardModeSizer.Add(self.radio3,0,wx.ALL,5)
         
         #-------横向-----------------
         self.msgSizer = wx.BoxSizer(wx.VERTICAL)
         self.msgSizer.Add(self.sloveOperateSizer,0,wx.ALL,5)
         self.msgSizer.Add(self.stealSizer,0,wx.ALL,5)
-        self.msgSizer.Add(self.refinedCardModeSizer,0,wx.ALL,5)
+        #self.msgSizer.Add(self.refinedCardModeSizer,0,wx.ALL,5)
         #------
         self.qqShowSizer = wx.BoxSizer(wx.HORIZONTAL)
         self.qqShowSizer.Add(self.msgSizer,0,wx.ALL,5)
@@ -88,10 +104,17 @@ class Setting(wx.Frame):
         if constant.COLLECTTHEMEID!=-1:
             self.collectThemeChoice.SetSelection(self.themeIdList.index(constant.COLLECTTHEMEID))
             if constant.QQSHOWSELECT!=-1:
-                self.setQQShowChoice(constant.QQSHOWSELECT)
+                self.setQQShowChoice(1, constant.QQSHOWSELECT)
             else:
-                self.setQQShowChoice()
+                self.setQQShowChoice(1)
             self.displayQQShow()
+
+        if constant.COLLECTTHEMEID2 != -1:
+            self.collectThemeChoice2.SetSelection(self.themeIdList.index(constant.COLLECTTHEMEID2))
+            if constant.QQSHOWSELECT2 != -1:
+                self.setQQShowChoice(2, constant.QQSHOWSELECT2)
+            else:
+                self.setQQShowChoice(2)
         
         '''设置偷炉好友的信息
         '''
@@ -115,13 +138,17 @@ class Setting(wx.Frame):
     def save(self,e):
         configFile = open('Mfkp_config.ini','w')
         constant.COLLECTTHEMEID = int(self.themeIdList[self.collectThemeChoice.GetSelection()])
+        constant.COLLECTTHEMEID2 = int(self.themeIdList[self.collectThemeChoice2.GetSelection()])
         constant.STEALFRIEND = int(self.friendNameList[self.friendChoice.GetSelection()])
         constant.STEALFRIEND2 = int(self.friendNameList[self.friendChoice2.GetSelection()])
         configFile.write('['+str(constant.USERNAME)+']'+'\n')
         configFile.write('themeid='+str(constant.COLLECTTHEMEID)+'\n')
+        configFile.write('themeid2=' + str(constant.COLLECTTHEMEID2) + '\n')
         configFile.write('friendid='+str(constant.STEALFRIEND)+'\n')
         configFile.write('qqshow='+str(self.qqShowChoice.GetSelection())+'\n')
         configFile.write('qqshowid='+str(self.qqShowChoice.GetStringSelection())+'\n')
+        configFile.write('qqshow=' + str(self.qqShowChoice2.GetSelection()) + '\n')
+        configFile.write('qqshowid=' + str(self.qqShowChoice2.GetStringSelection()) + '\n')
         configFile.write('friendid2='+str(constant.STEALFRIEND2)+'\n')
         configFile.close()
 
@@ -159,19 +186,31 @@ class Setting(wx.Frame):
     '''
     def setThemeSelect(self,e):
 
-        self.setQQShowChoice()
+        self.setQQShowChoice(1)
         self.displayQQShow()
-    
-    def setQQShowChoice(self,pos = 0):
-        self.database.cu.execute("select gift from cardtheme where pid=?",(self.themeIdList[self.collectThemeChoice.GetSelection()],))
+
+    def setThemeSelect2(self, e):
+        self.setQQShowChoice(2)
+
+    def setQQShowChoice(self, refinedCardId, pos=0):
+        if refinedCardId == 1:
+            self.database.cu.execute("select gift from cardtheme where pid=?",
+                                     (self.themeIdList[self.collectThemeChoice.GetSelection()],))
+        else:
+            self.database.cu.execute("select gift from cardtheme where pid=?",
+                                     (self.themeIdList[self.collectThemeChoice2.GetSelection()],))
         result = self.database.cu.fetchone()
         qqShowId = []
         for item in result[0].split('|'):
             self.database.cu.execute("select showId from gift where pid=?",(int(item),))
             showid = self.database.cu.fetchone()
             qqShowId.append(str(showid[0]))
-        self.qqShowChoice.SetItems(qqShowId)
-        self.qqShowChoice.SetSelection(pos)
+        if refinedCardId == 1:
+            self.qqShowChoice.SetItems(qqShowId)
+            self.qqShowChoice.SetSelection(pos)
+        else:
+            self.qqShowChoice2.SetItems(qqShowId)
+            self.qqShowChoice2.SetSelection(pos)
     
     
     def setQQShowSelect(self,e):
