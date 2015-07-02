@@ -22,7 +22,11 @@ SLOVENUM =0;
 ISRED  = 0;
 #抽卡次数
 RANDCHANCE = 0;
- 
+
+#默认购买卡片的id
+DEFAULTBYCARDID= 36
+
+ZCGINFOURL = r'http://card.show.qq.com/cgi-bin/card_user_zcg?g_tk=GTK'
 ISNEEDCODEURL = r'http://check.ptlogin2.qq.com/check?uin=UIN&regmaster=&appid='+APPID+'&ptlang=2052&pt_tea=1&login_sig=&r=RANDOM '
 CODEPIC = r'http://captcha.qq.com/getimage?aid='+APPID+'&r=RANDOM&cap_cd=CD&uin=UIN'
 LOGINURL = r'http://ptlogin2.qq.com/login?u=USERNAME&p=PASSWORD&pt_vcode_v1=0&pt_verifysession_v1=VERIFYSESSION&pt_randsalt=0&login_sig=&verifycode=CODE&mibao_css=m_qzone&aid=549000912&u1=http%3A%2F%2Fimgcache.qq.com%2Fqzone%2Fv5%2Floginsucc.html%3Fpara%3Dizone&ptredirect=1&h=1&from_ui=1&fp=loginerroralert&g=1&t=1&daid=5&pt_qzone_sig=1'
@@ -57,7 +61,8 @@ http://sh.show.qq.com/cgi-bin/qs_sh_card_dailygift?g_tk=1528628585
 type:0
 uin:411249087
 '''
-EXCHANGEBOX = 0;
-STOREBOX = 1;
-STOVEBOX = 2;
-MESSAGE = [];
+EXCHANGEBOX = 0
+STOREBOX = 1
+STOVEBOX = 2
+ZCG = 3
+MESSAGE = []

@@ -4,7 +4,8 @@ from bs4 import BeautifulSoup
 import commonlib.constant as constant
 import wx,re,sqlite3,time
 import collectcard
-
+import commonlib.commons as commons
+import json
 '''
 Created on 2015��5��31��
 
@@ -48,13 +49,25 @@ class GetInfoThread(threading.Thread):
         else:
             self.cardcomplete.insert(-1, 0)
         print u'插入后的卡炉信息',self.windows.stoveBox
+
+
+    '''获取珍藏阁信息
+    '''
+    def getZCGInfo(self):
+        base_url = commons.getUrl(constant.ZCGINFOURL,self.myHttpRequest)
+        postData = {
+           'opuin':constant.USERNAME,
+            'act':1
+        }
+        return self.myHttpRequest.get_response(base_url,postData).read()
+
         
        
     def run(self):
         self.timelist = []
         self.cardcomplete = []
         self.userInfo = []
-        self.windows.stealFriend = []
+
         if self.flag==constant.EXCHANGEBOX:
             self.childlist = self.soup.changebox.children
             constant.EXCHANGEBOXNUM = int(self.soup.changebox['cur'])
@@ -70,56 +83,79 @@ class GetInfoThread(threading.Thread):
             constant.STOREBOXNUM = int(self.soup.storebox['cur'])
             self.windows.storeBox = [0]*constant.STOREBOXNUM
         elif self.flag==constant.STOVEBOX:
+            self.windows.stealFriend = []
             if constant.ISRED==0:
                 constant.SLOVENUM = int(self.soup.stovebox['cur'])-1
             else:
                 constant.SLOVENUM = int(self.soup.stovebox['cur'])
             self.windows.stoveBox = [0]*constant.SLOVENUM
             self.childlist = self.soup.stovebox.children
-        for item in self.childlist:
-            if item != u'\n':
-                soup2 = BeautifulSoup(str(item))
-                pid = int(soup2.card['id'])
-                
-                
-                if self.flag==constant.EXCHANGEBOX:
-                    if pid==-1:
-                        self.windows.exchangeBox[int(soup2.card['slot'])] = 0
+        elif self.flag==constant.ZCG:
+            self.windows.zcgInfoDic = []
+            self.windows.czgComplete = []
+            resultInfo = self.getZCGInfo()
+            zcgInfos = json.loads(resultInfo)['puzi']
+            print u'珍藏阁信息', zcgInfos
+            for i,zcgInfo in enumerate(zcgInfos):
+                if zcgInfo['card_id']!=0:
+                    endtime = int(zcgInfo['begin'])+int(zcgInfo['smelt_time'])
+                    if int(time.time())>endtime:
+                        self.windows.czgComplete.append(1)
                     else:
-                        self.windows.exchangeBox[int(soup2.card['slot'])] = pid
-                elif self.flag==constant.STOREBOX:
-                    self.windows.storeBox[int(soup2.card['slot'])] = pid
+                        self.windows.czgComplete.append(0)
+                    x = time.localtime(endtime)
+                    self.timelist.append(time.strftime('%Y-%m-%d %H:%M:%S',x) )
                 else:
-                    if int(soup2.card['flag'])==2:
-                        self.cardcomplete.append(1)
-                    else:
-                        self.cardcomplete.append(0)
-                    if pid!=0:
-                        endtime = int(soup2.card['btime'])+int(soup2.card['locktime'])
-                        x = time.localtime(endtime)
-                        self.timelist.append(time.strftime('%Y-%m-%d %H:%M:%S',x) )
-                    else:
-                        self.timelist.append('')
-                    if int(soup2.card['slot'])!=6:
-                        self.windows.stoveBox[int(soup2.card['slot'])] = pid
-                    else:
-                        if pid!=0:
-                            self.windows.stealFriend.append(int(soup2.card['opuin']))
-                        self.windows.stoveBox[-1] = int(pid)
-                        if constant.ISRED==1 and int(soup2.card['opuin2'])!=0:
-                            self.windows.stealFriend.append(int(soup2.card['opuin2']))
-                            self.getSlove2Info(int(soup2.card['opuin2']))
-                        elif constant.ISRED==1:
-                            self.windows.stoveBox[-2] = 0
-                            self.timelist.insert(-1, "")
-                            self.cardcomplete.append(0)
+                    self.windows.czgComplete.append(-1)
+                self.windows.zcgInfoDic.append(zcgInfo['id'])
+
+            print u'空珍藏阁信息',self.windows.zcgInfoDic
+            print
+        if self.flag!=constant.ZCG:
+            for item in self.childlist:
+                if item != u'\n':
+                    soup2 = BeautifulSoup(str(item))
+                    pid = int(soup2.card['id'])
+
+
+                    if self.flag==constant.EXCHANGEBOX:
+                        if pid==-1:
+                            self.windows.exchangeBox[int(soup2.card['slot'])] = 0
                         else:
-                            pass
+                            self.windows.exchangeBox[int(soup2.card['slot'])] = pid
+                    elif self.flag==constant.STOREBOX:
+                        self.windows.storeBox[int(soup2.card['slot'])] = pid
+                    elif self.flag==constant.STOVEBOX:
+                        if int(soup2.card['flag'])==2:
+                            self.cardcomplete.append(1)
+                        else:
+                            self.cardcomplete.append(0)
+                        if pid!=0:
+                            endtime = int(soup2.card['btime'])+int(soup2.card['locktime'])
+                            x = time.localtime(endtime)
+                            self.timelist.append(time.strftime('%Y-%m-%d %H:%M:%S',x) )
+                        else:
+                            self.timelist.append('')
+                        if int(soup2.card['slot'])!=6:
+                            self.windows.stoveBox[int(soup2.card['slot'])] = pid
+                        else:
+                            if pid!=0:
+                                self.windows.stealFriend.append(int(soup2.card['opuin']))
+                            self.windows.stoveBox[-1] = int(pid)
+                            if constant.ISRED==1 and int(soup2.card['opuin2'])!=0:
+                                self.windows.stealFriend.append(int(soup2.card['opuin2']))
+                                self.getSlove2Info(int(soup2.card['opuin2']))
+                            elif constant.ISRED==1:
+                                self.windows.stoveBox[-2] = 0
+                                self.timelist.insert(-1, "")
+                                self.cardcomplete.append(0)
+                            else:
+                                pass
 #                             
         
         wx.CallAfter(self.windows.updateInfo,self.flag,self.timelist,self.userInfo)
-        if ((1 in self.cardcomplete) or (0 in self.windows.stoveBox) or (constant.RANDCHANCE>=10)) and constant.COLLECTTHEMEID!=-1 and  self.flag==constant.STOVEBOX :
-            print '偷炉1',constant.STEALFRIEND,'偷炉2',constant.STEALFRIEND2
+        if ((1 in self.cardcomplete) or (0 in self.windows.stoveBox) or (constant.RANDCHANCE>=10) or (-1 in self.windows.czgComplete) or (1 in self.windows.czgComplete)) and constant.COLLECTTHEMEID!=-1 and  (self.flag==constant.STOVEBOX) :
+            print u'偷炉信息',self.windows.stealFriend
             time.sleep(10)
             collectCardThread = collectcard.MyCollectCard(self.windows,self.cardcomplete)
             collectCardThread.start()

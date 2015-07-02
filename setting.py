@@ -151,7 +151,6 @@ class Setting(wx.Frame):
         configFile.write('qqshowid=' + str(self.qqShowChoice2.GetStringSelection()) + '\n')
         configFile.write('friendid2='+str(constant.STEALFRIEND2)+'\n')
         configFile.close()
-
         self.Destroy()
         
 

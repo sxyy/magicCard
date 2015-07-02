@@ -15,7 +15,7 @@ class TestListCtrl(wx.ListCtrl, listmix.CheckListCtrlMixin, listmix.ListCtrlAuto
         listmix.ListCtrlAutoWidthMixin.__init__(self)
         self.setResizeColumn(5)
         self.selectItem = -1
-        
+
     def OnCheckItem(self, index, flag):
         print(index, flag)
         if flag:
@@ -70,6 +70,8 @@ class Main(wx.Frame):
         self.storeBox =[]
         self.stoveBox = []
         self.stealFriend = []
+        #判断藏珍阁的卡片是否炼制完成了
+        self.czgComplete = []
         #用来判断炼卡进度是否要更新
         self.count = 0
         #print self.magicCardInfo
@@ -78,6 +80,7 @@ class Main(wx.Frame):
         self.safeBoxlistHead = [u'保',u'卡片',u'卡片类型',u'价格']
         self.sloveListHead = [u'序号',u'卡片',u'卡片类型',u'炼卡结束时间']
         self.refindProcessHead = [u'序号',u'卡片',u'理',u'存',u'炼']
+        self.zcgHead = [u'序号',u'炼卡结束时间']
         #-------------换卡箱----------
         sb  = wx.StaticBox(self,label = u'换卡箱')
         self.exchangeBoxSizer = wx.StaticBoxSizer(sb,wx.VERTICAL)
@@ -143,6 +146,8 @@ class Main(wx.Frame):
         self.nb.AddPage(self.tabOne, u"炼卡位")
         self.tabTwo = TabPanel(self.nb,self.refindProcessHead)
         self.nb.AddPage(self.tabTwo, u"炼卡进度")
+        self.tabFour = TabPanel(self.nb,self.zcgHead)
+        self.nb.AddPage(self.tabFour,u'珍藏阁');
         self.tabThree = TabPanel2(self.nb)
         self.nb.AddPage(self.tabThree,u'操作记录')
         self.nb.SetSelection(2)
@@ -315,12 +320,15 @@ class Main(wx.Frame):
            获取卡箱的内容
     '''
     def getBoxInfo(self):
+        infoThread4 = mythread.GetInfoThread(self.magicCardInfo,constant.ZCG,self,self.myHttpRequest)
+        infoThread4.start()
         infoThread1 = mythread.GetInfoThread(self.magicCardInfo,constant.EXCHANGEBOX,self,self.myHttpRequest)
         infoThread1.start()
         infoThread2 = mythread.GetInfoThread(self.magicCardInfo,constant.STOREBOX,self,self.myHttpRequest)
         infoThread2.start()
         infoThread3 = mythread.GetInfoThread(self.magicCardInfo,constant.STOVEBOX,self,self.myHttpRequest)
         infoThread3.start()
+
         #
         
     #界面更新
@@ -354,7 +362,7 @@ class Main(wx.Frame):
                     self.safeBoxlist.Append(["",result[0],self.database.cu.fetchone()[0],result[1]])
                 else:
                     self.safeBoxlist.Append(["","","",""])
-        else:
+        elif flag==constant.STOVEBOX:
             print u'卡炉信息',self.stoveBox
             self.tabOne.sloveBoxList.DeleteAllItems()
             for i,cardId in enumerate(self.stoveBox):
@@ -365,8 +373,13 @@ class Main(wx.Frame):
                     self.tabOne.sloveBoxList.Append(["",result[0],self.database.cu.fetchone()[0],timelist[i]])
                 else:
                     self.tabOne.sloveBoxList.Append(["","","",""])
+        elif flag==constant.ZCG:
+            self.tabFour.sloveBoxList.DeleteAllItems()
+            for i,endTime in enumerate(timelist):
+                self.tabFour.sloveBoxList.Append(["",timelist[i]])
+
         self.count +=1
-        if self.count==3:
+        if self.count==4:
             self.count=0
             #这里是更新炼卡进度 每5分钟进行刷新一次
             self.tabTwo.sloveBoxList.DeleteAllItems()
@@ -474,7 +487,7 @@ class Main(wx.Frame):
         base_url = url
         base_url = base_url.replace('GTK', str(Tea.getGTK(skey)))
         return base_url
-    
+
     
         
 # app = wx.App(False)

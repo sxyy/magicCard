@@ -9,6 +9,7 @@ import threading
 import time,wx,random
 from bs4 import BeautifulSoup
 import commonlib.constant as constant
+import  commonlib.commons as commons
 
 class MyCollectCard(threading.Thread):
 
@@ -22,18 +23,24 @@ class MyCollectCard(threading.Thread):
         self.flag = False
         self.cardInSlove = False
         self.cardInSloveList =[]
+        #self.windows.zcgInfoDic
+        print u'偷炉信息',self.windows.stealFriend
     
     def run(self):
         self.emptySlove = 0
         
         self.getRefineCard()
-        
+
         
         if constant.RANDCHANCE>=10:
             for i in  range(5):
                 wx.CallAfter(self.windows.drawCard)
                 time.sleep(1)
-            
+
+        '''这里进行珍藏阁炼卡
+        '''
+        self.refineCardInZCG()
+
         '''收拾交换箱将面值超过10或者为需要炼制卡的主题放入储物箱将面值<=10的出售
         '''
         for i,cardId in enumerate(self.windows.exchangeBox):
@@ -63,7 +70,7 @@ class MyCollectCard(threading.Thread):
             self.stealSlove(-1)
             
         maxEmptySlove = 2
-        '''这里不仅要判断时间还是放置另外一种情况当偷炉卡未没收回，但是有一个炉子已经空了的情况。
+        '''这里不仅要判断时间并且防止另外一种情况当偷炉卡未没收回，但是有一个炉子已经空了的情况。
         '''
         if (8<=int(time.strftime('%H',nowtime))<22) or self.windows.stoveBox[-1]!=0 :
             maxEmptySlove -= 1
@@ -110,25 +117,98 @@ class MyCollectCard(threading.Thread):
                 }
                 content_page = self.windows.myHttpRequest.get_response(base_url,postData)
                 result = content_page.read()
-                constant.COLLECTTHEMEID!=-1
                 print result
+                self.saveConfig()
+
+
 #                 soup = BeautifulSoup(result)
 #                 wx.CallAfter(self.windows.updateUserinfo,2,soup.qqhome['money'])
 #                 wx.CallAfter(self.windows.updateUserinfo,1,soup.qqhome['lv'])
+
                 wx.CallAfter(self.windows.freshRightNow)
                 break
                 
         #while emptySlove!=0:
-            
+
+
+    '''珍藏阁炼卡
+    '''
+    def refineCardInZCG(self):
+        for k,czgComplete in enumerate(self.windows.czgComplete):
+            if czgComplete==-1:
+                cardIdTemp = 0
+                cardPos = -1
+                for i,cardId in enumerate(self.windows.exchangeBox):
+                    if cardId==0:
+                        continue
+                    if self.windows.database.getCardInfo(cardId)[2]==10:
+                        cardIdTemp = cardId
+                        cardPos = i
+                        break
+                if cardIdTemp==0:
+                    wx.CallAfter(self.windows.buyCard,constant.DEFAULTBYCARDID)
+                    time.sleep(0.5)
+                    cardIdTemp = constant.DEFAULTBYCARDID
+                    cardPos = self.windows.exchangeBox.index(constant.DEFAULTBYCARDID)
+
+                base_url =commons.getUrl(constant.ZCGINFOURL,self.windows.myHttpRequest)
+                postData = {
+                    'puzi_id':self.windows.zcgInfoDic[k],
+                    'slot_id':cardPos,
+                    'card_id':cardIdTemp,
+                    'act':2
+                }
+                content_page = self.windows.myHttpRequest.get_response(base_url,postData)
+                self.windows.exchangeBox[cardPos] = 0
+                print content_page.read()
+
+
+    '''保存配置文件
+    '''
+    def saveConfig(self):
+        themeTemp = constant.COLLECTTHEMEID
+        constant.COLLECTTHEMEID = constant.COLLECTTHEMEID2
+        constant.COLLECTTHEMEID2 = themeTemp
+        qqshowTemp = constant.QQSHOWSELECT
+        constant.QQSHOWSELECT = constant.QQSHOWSELECT2
+        constant.QQSHOWSELECT2 = qqshowTemp
+        qqshowId = constant.QQSHOWID
+        constant.QQSHOWID = constant.QQSHOWID2
+        constant.QQSHOWID2 = qqshowId
+        configFile = open('Mfkp_config.ini','w')
+        configFile.write('['+str(constant.USERNAME)+']'+'\n')
+        configFile.write('themeid='+str(constant.COLLECTTHEMEID)+'\n')
+        configFile.write('themeid2=' + str(constant.COLLECTTHEMEID2) + '\n')
+        configFile.write('friendid='+str(constant.STEALFRIEND)+'\n')
+        configFile.write('qqshow='+str(constant.QQSHOWSELECT)+'\n')
+        configFile.write('qqshowid='+str(constant.QQSHOWID)+'\n')
+        configFile.write('qqshow=' + str(constant.QQSHOWSELECT2) + '\n')
+        configFile.write('qqshowid=' + str(constant.QQSHOWID2) + '\n')
+        configFile.write('friendid2='+str(constant.STEALFRIEND2)+'\n')
+        configFile.close()
     
     
     '''收获卡片
     '''
     def getRefineCard(self):
         
-        print u'炼卡炉信息',self.slovelist
+        print u'卡炉卡片完成情况',self.slovelist
         print u'偷炉信息',self.windows.stealFriend
         base_url = ''
+
+        #这里需要增加收获czg的卡片
+
+        # for czg in self.windows.czgComplete:
+        #     if czg==1:
+        #         base_url = commons.getUrl(constant.ZCGINFOURL,self.windows.myHttpRequest)
+        #         postData = {
+        #             'act':5,
+        #
+        #
+        #         }
+
+
+
         for i,cardId in enumerate(self.windows.stoveBox):
             if cardId==0:
                 self.emptySlove +=1
@@ -193,8 +273,8 @@ class MyCollectCard(threading.Thread):
             stealfriend = constant.STEALFRIEND2
         else:
             stealfriend = constant.STEALFRIEND
-        print '卡炉信息',self.windows.stoveBox
-        print '偷炉信息',self.windows.stealFriend
+        print u'卡炉信息',self.windows.stoveBox
+        print u'偷炉信息',self.windows.stealFriend
         if self.windows.stoveBox[slot]==0:
             stealCardId = self.getRandomStealCardId()
             print 'stealCardId',stealCardId
@@ -244,9 +324,6 @@ class MyCollectCard(threading.Thread):
 
             stealCardDict[cardId[0]] = self.windows.exchangeBox.count(cardId[0])+self.windows.storeBox.count(cardId[0])+self.windows.stoveBox.count(cardId[0])
         #对字典进行排序
-        
-        
-        
         return sorted(stealCardDict.iteritems(),key=lambda asd:asd[1],reverse=False)[0][0]
         #except Exception:
             #return -1
@@ -398,10 +475,11 @@ class MyCollectCard(threading.Thread):
                     'type':1,
         }
         page_content = self.windows.myHttpRequest.get_response(base_url,postData).read()
-        print '翻牌结果',page_content
-    
+        print u'翻牌结果',page_content
+
+
     #判断卡片是否存在
-    def cardExist(self,flag,cardId): 
+    def cardExist(self,flag,cardId):
         print u'检查卡箱是否存在该卡片',cardId
         print  u'交换箱',self.windows.exchangeBox,u'保险箱',self.windows.storeBox
         if cardId in self.windows.exchangeBox or cardId in self.windows.storeBox  :

@@ -50,7 +50,7 @@ class CardDataBase(object):
         result = self.cu.fetchone()
         return result[0]
     
-    #返回卡的名字
+    #返回卡的名字 名字，主题，价格
     def getCardInfo(self,cardId):
         cardInfo = []
         self.cu.execute("select name,price,themeid from cardinfo where pid=?",(cardId,))
@@ -61,7 +61,7 @@ class CardDataBase(object):
         cardInfo.append(str(result[1]))
         return cardInfo
     
-    #返回卡的id值
+    #返回卡的主题id值
     def getCardThemeid(self,cardId):
         self.cu.execute("select themeid from cardinfo where pid=?",(int(cardId),))
         result = self.cu.fetchone()
