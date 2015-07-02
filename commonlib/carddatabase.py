@@ -60,7 +60,14 @@ class CardDataBase(object):
         cardInfo.append(self.cu.fetchone()[0])
         cardInfo.append(str(result[1]))
         return cardInfo
-    
+
+    '''获取卡片的主题名字
+    '''
+
+    def getCardThemeName(self, themeId):
+        self.cu.execute("SELECT name FROM cardtheme WHERE pid=?", (int(themeId),))
+        result = self.cu.fetchone()
+        return result[0]
     #返回卡的主题id值
     def getCardThemeid(self,cardId):
         self.cu.execute("select themeid from cardinfo where pid=?",(int(cardId),))

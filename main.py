@@ -125,6 +125,10 @@ class Main(wx.Frame):
         self.level = wx.StaticText(self,-1,u'等级')
         self.magic = wx.StaticText(self,-1,u'魔力')
         self.coin = wx.StaticText(self,-1,u'金币')
+        self.collectTheme = wx.StaticText(self, -1, u'炼制主题')
+        self.runState = wx.StaticText(self, -1, u'状态   未运行')
+        self.runState.SetForegroundColour((255, 0, 0))
+        self.collectTheme.SetForegroundColour((255, 0, 0))
         self.infoBoxButtonSize = wx.BoxSizer(wx.HORIZONTAL)
         self.setConfig = wx.Button(self,-1,u'设置参数')
         self.start = wx.Button(self,-1,u'开始运行')
@@ -136,6 +140,8 @@ class Main(wx.Frame):
         self.infoBoxSizer.Add(self.level,0,wx.ALL,5)
         self.infoBoxSizer.Add(self.magic,0,wx.ALL,5)
         self.infoBoxSizer.Add(self.coin,0,wx.ALL,5)
+        self.infoBoxSizer.Add(self.collectTheme, 0, wx.ALL, 5)
+        self.infoBoxSizer.Add(self.runState, 0, wx.ALL, 5)
         self.infoBoxSizer.Add(self.infoBoxButtonSize,0,wx.ALL,5)
         
         
@@ -150,7 +156,7 @@ class Main(wx.Frame):
         self.nb.AddPage(self.tabFour,u'珍藏阁');
         self.tabThree = TabPanel2(self.nb)
         self.nb.AddPage(self.tabThree,u'操作记录')
-        self.nb.SetSelection(2)
+        self.nb.SetSelection(3)
         self.CardInfo.Add(self.nb,1,wx.ALL,5)
 
         #---------------总的布局----------
@@ -169,8 +175,8 @@ class Main(wx.Frame):
         self.operateLogUpdate(u'正在获取卡箱以及好友信息')
         self.getBoxInfo()
 
-        
-        
+        if constant.COLLECTTHEMEID != -1:
+            self.updateUserinfo(4, self.database.getCardThemeName(constant.COLLECTTHEMEID))
         
     
     
@@ -401,9 +407,12 @@ class Main(wx.Frame):
             self.level.SetLabelText(u'等级   '+info)
         elif flag==2:
             self.coin.SetLabelText(u'金币   '+info)
-        else:
+        elif flag == 3:
             self.magic.SetLabelText(u'魔力   '+info)
-
+        elif flag == 4:
+            self.collectTheme.SetLabelText(u'主题   ' + info)
+        elif flag == 5:
+            self.runState.SetLabelText(u'状态   ' + info)
     
     
     #更新保险箱
@@ -444,10 +453,10 @@ class Main(wx.Frame):
         
         '''这里新建一个死循环的线程 每隔多久检查是否卡片炼制完成，同时也更新界面
         '''
+        constant.RUNSTATE = True
+        self.updateUserinfo(5, u'已运行')
         thread.start_new_thread(self.timerThread,(2,))
-        
-    
-    
+
     #Log记录更新
     def operateLogUpdate(self,msg):
         nowtime = time.localtime(time.time())

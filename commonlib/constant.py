@@ -22,6 +22,8 @@ SLOVENUM =0;
 ISRED  = 0;
 #抽卡次数
 RANDCHANCE = 0;
+# 运行状态
+RUNSTATE = False
 
 #默认购买卡片的id
 DEFAULTBYCARDID= 36

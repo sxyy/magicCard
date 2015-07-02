@@ -198,14 +198,16 @@ class MyCollectCard(threading.Thread):
 
         #这里需要增加收获czg的卡片
 
-        # for czg in self.windows.czgComplete:
-        #     if czg==1:
-        #         base_url = commons.getUrl(constant.ZCGINFOURL,self.windows.myHttpRequest)
-        #         postData = {
-        #             'act':5,
-        #
-        #
-        #         }
+        for i, czg in enumerate(self.windows.czgComplete):
+            if czg == 1:
+                base_url = commons.getUrl(constant.ZCGINFOURL, self.windows.myHttpRequest)
+                postData = {
+                    'act': 5,
+                    'puzi_id': self.windows.zcgInfoDic[i]
+                }
+                result = self.windows.myHttpRequest.get_response(base_url, postData).read()
+                print result
+                self.windows.czgComplete[i] = -1
 
 
 

@@ -45,9 +45,9 @@ class GetInfoThread(threading.Thread):
         x = time.localtime(endtime)
         self.timelist.insert(-1, time.strftime('%Y-%m-%d %H:%M:%S',x))
         if int(soup.card['flag'])==2:
-            self.cardcomplete.insert(-1, 1)
+            self.cardcomplete[-2] = 1
         else:
-            self.cardcomplete.insert(-1, 0)
+            self.cardcomplete[-2] = 0
         print u'插入后的卡炉信息',self.windows.stoveBox
 
 
@@ -89,6 +89,7 @@ class GetInfoThread(threading.Thread):
             else:
                 constant.SLOVENUM = int(self.soup.stovebox['cur'])
             self.windows.stoveBox = [0]*constant.SLOVENUM
+            self.cardcomplete = [0] * constant.SLOVENUM
             self.childlist = self.soup.stovebox.children
         elif self.flag==constant.ZCG:
             self.windows.zcgInfoDic = []
@@ -126,10 +127,7 @@ class GetInfoThread(threading.Thread):
                     elif self.flag==constant.STOREBOX:
                         self.windows.storeBox[int(soup2.card['slot'])] = pid
                     elif self.flag==constant.STOVEBOX:
-                        if int(soup2.card['flag'])==2:
-                            self.cardcomplete.append(1)
-                        else:
-                            self.cardcomplete.append(0)
+
                         if pid!=0:
                             endtime = int(soup2.card['btime'])+int(soup2.card['locktime'])
                             x = time.localtime(endtime)
@@ -137,8 +135,20 @@ class GetInfoThread(threading.Thread):
                         else:
                             self.timelist.append('')
                         if int(soup2.card['slot'])!=6:
+                            '''卡片的完成情况
+                            '''
                             self.windows.stoveBox[int(soup2.card['slot'])] = pid
+                            if int(soup2.card['flag']) == 2:
+                                self.cardcomplete[int(soup2.card['slot'])] = 1
+                            else:
+                                self.cardcomplete[int(soup2.card['slot'])] = 0
                         else:
+
+                            if int(soup2.card['flag']) == 2:
+                                self.cardcomplete[-1] = 1
+                            else:
+                                self.cardcomplete[-1] = 0
+
                             if pid!=0:
                                 self.windows.stealFriend.append(int(soup2.card['opuin']))
                             self.windows.stoveBox[-1] = int(pid)
@@ -148,17 +158,17 @@ class GetInfoThread(threading.Thread):
                             elif constant.ISRED==1:
                                 self.windows.stoveBox[-2] = 0
                                 self.timelist.insert(-1, "")
-                                self.cardcomplete.append(0)
+                                self.cardcomplete[-2] = 0
                             else:
                                 pass
 #                             
         
         wx.CallAfter(self.windows.updateInfo,self.flag,self.timelist,self.userInfo)
-        if ((1 in self.cardcomplete) or (0 in self.windows.stoveBox) or (constant.RANDCHANCE>=10) or (-1 in self.windows.czgComplete) or (1 in self.windows.czgComplete)) and constant.COLLECTTHEMEID!=-1 and  (self.flag==constant.STOVEBOX) :
-            print u'偷炉信息',self.windows.stealFriend
-            time.sleep(10)
-            collectCardThread = collectcard.MyCollectCard(self.windows,self.cardcomplete)
-            collectCardThread.start()
-            
-            
-   
+        if constant.RUNSTATE:
+            if ((1 in self.cardcomplete) or (0 in self.windows.stoveBox) or (constant.RANDCHANCE >= 10) or (
+                -1 in self.windows.czgComplete) or (
+                1 in self.windows.czgComplete)) and constant.COLLECTTHEMEID != -1 and (self.flag == constant.STOVEBOX):
+                print u'偷炉信息', self.windows.stealFriend
+                time.sleep(10)
+                collectCardThread = collectcard.MyCollectCard(self.windows, self.cardcomplete)
+                collectCardThread.start()
