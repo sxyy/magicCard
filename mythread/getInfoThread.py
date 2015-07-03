@@ -100,7 +100,7 @@ class GetInfoThread(threading.Thread):
             for i,zcgInfo in enumerate(zcgInfos):
                 if zcgInfo['card_id']!=0:
                     endtime = int(zcgInfo['begin'])+int(zcgInfo['smelt_time'])
-                    if int(time.time())>endtime:
+                    if int(time.time())-endtime>10:
                         self.windows.czgComplete.append(1)
                     else:
                         self.windows.czgComplete.append(0)

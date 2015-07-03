@@ -298,7 +298,7 @@ class Main(wx.Frame):
         if type==0:
             self.operateLogUpdate(u'卡片 :'+self.exchangeBoxlist.GetItemText(src,1)+u'放入保险箱')
             self.storeBox[des] = cardId
-            print '保险箱信息',self.storeBox
+            print u'保险箱信息',self.storeBox
             self.exchangeBox[src]=0
             
         else:

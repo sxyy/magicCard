@@ -56,9 +56,10 @@ class MyCollectCard(threading.Thread):
                 elif  0 in self.windows.storeBox: 
                     wx.CallAfter(self.windows.card_user_storage_exchange,0,i,cardId)
                 time.sleep(1)
-        '''获取到需要炼制的主题的卡片，从最高面值开始往下进行遍历。
+
+        '''获取到需要炼制的主题的卡片，从最高面值开始往下进行遍历，这里的卡片是不包括需要购买的卡的。
         ''' 
-        self.windows.database.cu.execute("select pid from cardinfo where themeid=? order by price DESC",(constant.COLLECTTHEMEID,))
+        self.windows.database.cu.execute("select pid from cardrelation where themeid=?",(constant.COLLECTTHEMEID,))
         collectCardList =  self.windows.database.cu.fetchall()
         '''这里进行炼卡
         '''  
@@ -90,12 +91,6 @@ class MyCollectCard(threading.Thread):
                 cardId = cardItem[0]
                 if self.cardExist(0,cardId):
                     continue
-                elif self.windows.database.getCardInfo(cardId)[2]=='10':
-                    '''进行买卡 
-                    '''
-                    wx.CallAfter(self.windows.buyCard,cardId)
-                    time.sleep(1)
-                    continue
                 else:
                     
                     self.windows.database.cu.execute("select content1,content2,content3 from cardrelation where pid=? ",(cardId,))
@@ -104,31 +99,68 @@ class MyCollectCard(threading.Thread):
                     if self.flag:
                         break
             if collectCardNum==len(collectCardList) :
-                if self.cardInSlove:
-                    break
-                base_url = self.windows.getUrl(constant.COLLECTADD)
-                self.windows.database.cu.execute("select pid from gift where showId=?",(constant.QQSHOWID,))
-                sqlresult = self.windows.database.cu.fetchone()
-                postData = {
-                            'themetype':0,
-                            'giftid':sqlresult[0],
-                            'cardtype':1,
-                            'theme':constant.COLLECTTHEMEID
-                }
-                content_page = self.windows.myHttpRequest.get_response(base_url,postData)
-                result = content_page.read()
-                print result
-                self.saveConfig()
 
+                print u'卡片已炼制完成，转换主题'
+                self.saveConfig()
+                #进行界面的更新
+                wx.CallAfter(self.windows.updateUserinfo,4,self.windows.database.getCardThemeName(constant.COLLECTTHEMEID))
+                break
+        self.checkTheme2AndCommit()
+                
+        #while emptySlove!=0:
+
+
+
+    '''检查主题2并提交主题2
+    '''
+    def checkTheme2AndCommit(self):
+        '''获取到需要炼制的主题的卡片，从最高面值开始往下进行遍历。
+        '''
+        self.windows.database.cu.execute("select pid from cardinfo where themeid=? order by price DESC",(constant.COLLECTTHEMEID2,))
+        collectCardList =  self.windows.database.cu.fetchall()
+        colletCardNum = 0;
+        for cardItem in collectCardList:
+            cardId = cardItem[0]
+            if self.cardExist(1,cardId):
+                colletCardNum+=1
+                continue
+            elif self.windows.database.getCardInfo(cardId)[2]=='10' and not self.cardInSlove:
+                '''进行买卡
+                '''
+                wx.CallAfter(self.windows.buyCard,cardId)
+                colletCardNum+=1
+                time.sleep(1)
+                continue
+            else:
+                break
+        if colletCardNum==len(collectCardList):
+            self.commitCard()
+        else:
+            print u'卡片未满足提交条件'
+
+
+
+    def commitCard(self):
+        base_url = self.windows.getUrl(constant.COLLECTADD)
+        self.windows.database.cu.execute("select pid from gift where showId=?",(constant.QQSHOWID2,))
+        sqlresult = self.windows.database.cu.fetchone()
+        postData = {
+                    'themetype':0,
+                    'giftid':sqlresult[0],
+                    'cardtype':1,
+                    'theme':constant.COLLECTTHEMEID2
+        }
+        content_page = self.windows.myHttpRequest.get_response(base_url,postData)
+        result = content_page.read()
+        print result
+
+        wx.CallAfter(self.windows.freshRightNow)
 
 #                 soup = BeautifulSoup(result)
 #                 wx.CallAfter(self.windows.updateUserinfo,2,soup.qqhome['money'])
 #                 wx.CallAfter(self.windows.updateUserinfo,1,soup.qqhome['lv'])
 
-                wx.CallAfter(self.windows.freshRightNow)
-                break
-                
-        #while emptySlove!=0:
+
 
 
     '''珍藏阁炼卡

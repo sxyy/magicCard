@@ -11,7 +11,9 @@ import commonlib.carddatabase as carddatabase
 import os,sys,md5
 import StringIO
 class MyLogin(wx.Frame):
-    
+
+
+
     def __init__(self, parent, title):
         wx.Frame.__init__(self, parent, title=title, size=(750,150))
         self.cap_cd = ''
@@ -212,6 +214,8 @@ class MyLogin(wx.Frame):
             dbFileTemp.write(response)
             dbFileTemp.close()
         self.database = carddatabase.CardDataBase(self.cur_file_dir())
+
+
     #获取脚本文件的当前路径
     def cur_file_dir(self):
         #获取脚本路径
