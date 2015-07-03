@@ -138,8 +138,8 @@ class MyCollectCard(threading.Thread):
         else:
             print u'卡片未满足提交条件'
 
-
-
+    '''提交卡片
+    '''
     def commitCard(self):
         base_url = self.windows.getUrl(constant.COLLECTADD)
         self.windows.database.cu.execute("select pid from gift where showId=?",(constant.QQSHOWID2,))
@@ -258,7 +258,7 @@ class MyCollectCard(threading.Thread):
                             'opuin':self.windows.stealFriend[0]
                     }
                     base_url = self.windows.getUrl(constant.GETSTEALCARD)
-                    del self.windows.stealFriend[0]
+                    self.windows.stealFriend[0] = 0
                 elif constant.ISRED==1 and i==(len(self.slovelist)-2):
                     self.postData = {
                             'ver':1,
@@ -269,7 +269,7 @@ class MyCollectCard(threading.Thread):
                             'opuin':self.windows.stealFriend[1]
                     }
                     base_url = self.windows.getUrl(constant.GETSTEALCARD)
-                    del self.windows.stealFriend[1]
+                    self.windows.stealFriend[1] = 0
                 else:
                     self.postData = {
                             'ver':1,
@@ -341,7 +341,7 @@ class MyCollectCard(threading.Thread):
                 'slottype':1,
                 'opuin':stealfriend,
                 }
-                self.windows.stealFriend.append(stealfriend)
+                self.windows.stealFriend[slot] = stealfriend
                 self.refineCard(stealCardId, self.findCardPosition(cardlist), cardlist,constant.STEALCARD,postData)
             else:
                 self.emptySlove -=1
@@ -375,8 +375,8 @@ class MyCollectCard(threading.Thread):
             elif self.windows.database.getCardInfo(cardId)[2]=='10':
                 '''进行买卡
                 '''
-                if self.cardExist(1,cardId):
-                    continue
+                if self.flag:
+                    return
                 wx.CallAfter(self.windows.buyCard,cardId)
                 time.sleep(1)
                 continue

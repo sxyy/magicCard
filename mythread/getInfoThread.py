@@ -83,7 +83,7 @@ class GetInfoThread(threading.Thread):
             constant.STOREBOXNUM = int(self.soup.storebox['cur'])
             self.windows.storeBox = [0]*constant.STOREBOXNUM
         elif self.flag==constant.STOVEBOX:
-            self.windows.stealFriend = []
+            self.windows.stealFriend = [0, 0]
             if constant.ISRED==0:
                 constant.SLOVENUM = int(self.soup.stovebox['cur'])-1
             else:
@@ -150,17 +150,19 @@ class GetInfoThread(threading.Thread):
                                 self.cardcomplete[-1] = 0
 
                             if pid!=0:
-                                self.windows.stealFriend.append(int(soup2.card['opuin']))
+                                self.windows.stealFriend[-1] = int(soup2.card['opuin'])
+                            else:
+                                self.windows.stealFriend[-1] = 0
                             self.windows.stoveBox[-1] = int(pid)
                             if constant.ISRED==1 and int(soup2.card['opuin2'])!=0:
-                                self.windows.stealFriend.append(int(soup2.card['opuin2']))
+                                self.windows.stealFriend[-2] = int(soup2.card['opuin2'])
                                 self.getSlove2Info(int(soup2.card['opuin2']))
                             elif constant.ISRED==1:
                                 self.windows.stoveBox[-2] = 0
                                 self.timelist.insert(-1, "")
                                 self.cardcomplete[-2] = 0
-                            else:
-                                pass
+                                self.windows.stealFriend[-2] = 0
+
 #                             
         
         wx.CallAfter(self.windows.updateInfo,self.flag,self.timelist,self.userInfo)
