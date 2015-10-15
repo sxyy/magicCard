@@ -12,7 +12,7 @@ class CommitThread(threading.Thread):
         self.theme_id = themeId
 
 
-     # Overwrite run() method, put what you want the thread do here
+
     def run(self):
 
         if constant.SID=='-1':
@@ -34,41 +34,6 @@ class CommitThread(threading.Thread):
                 wx.CallAfter(self.window.updateLog,u'提交成功')
             elif u'找不到相应的记录' in result_content:
                 wx.CallAfter(self.window.updateLog,u'提交失败，请检查卡片是否齐全')
-
-
-
-    def stop(self):
-        self.thread_stop = True
-
-
-    #
-    #  # 获取相应登陆的一些数据
-    # def get_sid(self,):
-    #     base_url = constant.MAINPAGE
-    #     self.myHttpRequest.get_response(base_url)
-    #     base_url = constant.GETSID
-    #     post_data = {
-    #         'qq':constant.USERNAME,
-    #         'pwd':constant.PASSWORD,
-    #         'sidtype':'1',
-    #         'nopre':'0',
-    #         'loginTitle':u'手机腾讯网'.encode('utf-8'),
-    #         'q_from':'',
-    #         'bid':'0',
-    #         'loginType':'3',
-    #         'loginsubmit':u'登录'.encode('utf-8'),
-    #         "login_url":"http://pt.3g.qq.com/s?aid=nLogin&sid=AfYLxNl-zrRwzRvmKiZc5aV8"
-    #     }
-    #     sid = []
-    #     i = 0
-    #     while len(sid)==0:
-    #         if i>20:
-    #             break
-    #         page_content = self.myHttpRequest.get_response(base_url,post_data)
-    #         sid = re.findall('ontimer=\"http://info\.3g\.qq\.com/g/s\?sid=(.*?)&amp',page_content.read(),re.S)
-    #         logging.info('sid'+'.'.join(sid))
-    #         i += 1
-    #     constant.SID =  sid[0]
 
     # 获取相应登陆的一些数据
     def get_sid(self,):

@@ -112,7 +112,7 @@ class AccountManage(wx.Panel):
         self.exchangeBoxlistHead = [u'换',u'卡片',u'卡片类型',u'价格']
         self.safeBoxlistHead = [u'保',u'卡片',u'卡片类型',u'价格']
         self.operate_list = [u'一键领取登陆礼包',u'一键领取100面值卡片',u'一键送礼物卡',u'一键小号420魔力',u'一键国庆登陆领礼包',u'一键领取国庆3天登录礼包',u'一键领取国庆7天登录礼包',u'一键领取国庆10天登录礼包',
-                             u'一键领取国庆12天登录礼包',u'一键查询茱萸个数',u'一键登高']
+                             u'一键领取国庆12天登录礼包',u'一键查询茱萸个数',u'一键登高',u'一键练卡']
         self.myHttpRequest = myhttp.MyHttpRequest()
         #当前的选择的账号
 

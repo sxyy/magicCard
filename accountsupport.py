@@ -16,27 +16,14 @@ class TestListCtrl(wx.ListCtrl, listmix.CheckListCtrlMixin, listmix.ListCtrlAuto
         self.selectItem = -1
         self.account_select = []
         self.windows = self.GetParent()
-        self.menu_title_by_id = {1:u'查看小号的卡箱'}
-        self.Bind(wx.EVT_LIST_ITEM_RIGHT_CLICK,self.onItemRightClick)
 
-    def onItemRightClick(self,e):
-        self.selectAccount = self.windows.clientIdDict[int(e.GetText())]
-        menu = wx.Menu()
-        for (menu_id,title) in self.menu_title_by_id.items():
-            menu.Append(menu_id, title)
-            # wx.EVT_MENU( menu, menu_id, self.MenuSelectionCb )
-        self.PopupMenu(menu,e.GetPoint())
-        menu.Destroy()
 
 
     def OnCheckItem(self, index, flag):
         print(index, flag)
         if flag:
-            self.account_select[index] = 1
             self.selectItem = index
             self.selectCardName = self.GetItemText(index,1)
-        else:
-            self.account_select[index] = 0
 
 
 
@@ -48,7 +35,7 @@ class AccountSupport(wx.Panel):
         wx.Panel.__init__(self, parent=parent)
         self.database = database
         self.myHttpRequest = myHttpRequest
-        self.head_list = [u'序号',u'面值',u'名称',u'主号数量']
+        self.head_list = [u'序号',u'面值',u'名称',u'主号数量',u'小号数量']
          #主题列表
         self.themeIdList = []
         self.themeNameList = []
@@ -70,7 +57,7 @@ class AccountSupport(wx.Panel):
         self.buttonSizer.Add(self.refresh,0,wx.ALL,5)
 
         #-----------------------列表-------------
-        self.sb = wx.StaticBox(self,label=u'主号信息')
+        self.sb = wx.StaticBox(self,label=u'账号信息')
         self.listSizer = wx.StaticBoxSizer(self.sb,wx.HORIZONTAL)
         self.sloveBoxList = TestListCtrl(self,style=wx.LC_REPORT)
         self.sloveBoxList.SetBackgroundColour((227,237,205))
@@ -107,12 +94,22 @@ class AccountSupport(wx.Panel):
         card_info = self.database.getCardFromTheme(self.themeIdList[self.commit_index])
         magic_info = commons.getMagicInfo(self.myHttpRequest,constant.USERNAME)
         exchangBox = commons.get_type_info(constant.EXCHANGEBOX,magic_info)
-        print exchangBox
         storeBox = commons.get_type_info(constant.STOREBOX,magic_info)
-        print storeBox
+
+        account_exchangBox_list = []
+        account_storeBox_list = []
+        for key,value in accountManage.AccountManage.account_http_dic.items():
+            magic_info = commons.getMagicInfo(value,key)
+            account_exchangBox_list.append(commons.get_type_info(constant.EXCHANGEBOX,magic_info))
+            account_storeBox_list.append(commons.get_type_info(constant.STOREBOX,magic_info))
         for card_item in card_info:
             card_id = card_item[0]
-            self.sloveBoxList.Append(['',card_item[1],card_item[2],str(exchangBox.count(card_id)+storeBox.count(card_id))])
+            card_count = 0
+            for account_exchangBox in account_exchangBox_list:
+                card_count+=account_exchangBox.count(card_id)
+            for account_storeBox in account_storeBox_list:
+                card_count+=account_storeBox.count(card_id)
+            self.sloveBoxList.Append(['',card_item[1],card_item[2],str(exchangBox.count(card_id)+storeBox.count(card_id)),str(card_count)])
     '''
     获取要收集的主题
     '''
