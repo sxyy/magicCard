@@ -6,9 +6,9 @@ import wx;
 class GetCodePicThread(threading.Thread):
     def __init__(self,window,myHttpRequest,userName):  
         threading.Thread.__init__(self,)  
-        self.window = window;
-        self.myHttpRequest =myHttpRequest; 
-        self.userName = str(userName);
+        self.window = window
+        self.myHttpRequest =myHttpRequest
+        self.userName = str(userName)
         # self.windows = windows;
 
     # Overwrite run() method, put what you want the thread do here
@@ -22,7 +22,7 @@ class GetCodePicThread(threading.Thread):
         self.thread_stop = True  
     # 获取相应登陆的一些数据
     def getCode(self,):
-        base_url = constant.ISNEEDCODEURL
+        base_url = constant.ISNEEDCODEURL2
         randomNum = commons.getRandomNum(4)
         base_url = base_url.replace('UIN', self.userName)
         base_url = base_url.replace('RANDOM','0.'+randomNum)
@@ -41,7 +41,7 @@ class GetCodePicThread(threading.Thread):
     
     # 获取验证码图片
     def getCodePic(self):
-        base_url = constant.CODEPIC
+        base_url = constant.CODEPIC2
         randomNum = commons.getRandomNum(4)
         base_url = base_url.replace('UIN', self.userName)
         base_url = base_url.replace('RANDOM', '0.'+randomNum)

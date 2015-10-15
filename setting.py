@@ -4,7 +4,7 @@
 '''
 import wx,StringIO
 import commonlib.constant as constant
-
+import ConfigParser
 class Setting(wx.Frame):
 
     def __init__(self, parent, title,database,myHttpRequest):
@@ -12,14 +12,14 @@ class Setting(wx.Frame):
         self.database = database
         
         self.myHttpRequest = myHttpRequest
-        
-    
+        self.config = ConfigParser.ConfigParser()
+
         #-------------炉子操作----------
         sb  = wx.StaticBox(self,label = u'需要操作的套卡')
         self.sloveOperateSizer = wx.StaticBoxSizer(sb, wx.VERTICAL)
 
         # 第一套卡片
-        self.cardOneSizer = wx.BoxSizer(wx.HORIZONTAL);
+        self.cardOneSizer = wx.BoxSizer(wx.HORIZONTAL)
         self.cardLabel = wx.StaticText(self, -1, u'卡片1')
         self.collectThemeChoice = wx.Choice(self,-1,(50,400),wx.DefaultSize,self.getCollectTheme())
         self.collectThemeChoice.Bind(wx.EVT_CHOICE,self.setThemeSelect)
@@ -33,7 +33,7 @@ class Setting(wx.Frame):
         self.cardOneSizer.Add(self.qqShowChoice, 0, wx.ALL, 5)
 
         # 第二套卡片
-        self.cardOneSizer2 = wx.BoxSizer(wx.HORIZONTAL);
+        self.cardOneSizer2 = wx.BoxSizer(wx.HORIZONTAL)
         self.cardLabel2 = wx.StaticText(self, -1, u'卡片2')
         self.collectThemeChoice2 = wx.Choice(self, -1, (50, 400), wx.DefaultSize, self.getCollectTheme())
         self.collectThemeChoice2.Bind(wx.EVT_CHOICE, self.setThemeSelect2)
@@ -58,33 +58,35 @@ class Setting(wx.Frame):
         
         self.friendSizer = wx.BoxSizer(wx.HORIZONTAL)
         self.friendLabel = wx.StaticText(self,-1,u'好友')
-        self.friendChoice = wx.Choice(self,-1,(50,400),wx.DefaultSize,self.getFriendList())
+        self.friendTextCtrl1 = wx.TextCtrl(self,-1)
+        # self.friendChoice = wx.Choice(self,-1,(50,400),wx.DefaultSize,self.getFriendList())
         self.friendSizer.Add(self.friendLabel,0,wx.ALL,5)
-        self.friendSizer.Add(self.friendChoice,0,wx.ALL,5)
+        self.friendSizer.Add(self.friendTextCtrl1,0,wx.ALL,5)
         self.friendLabel2 = wx.StaticText(self,-1,u'好友2')
-        self.friendChoice2 = wx.Choice(self,-1,(50,400),wx.DefaultSize,self.getFriendList())
+        self.friendTextCtrl2 = wx.TextCtrl(self,-1)
+        # self.friendChoice2 = wx.Choice(self,-1,(50,400),wx.DefaultSize,self.getFriendList())
         if constant.ISRED==0:
             self.friendLabel2.Enable(False)
-            self.friendChoice2.Enable(False)
+            self.friendTextCtrl2.Enable(False)
         self.friendSizer.Add(self.friendLabel2,0,wx.ALL,5)
-        self.friendSizer.Add(self.friendChoice2,0,wx.ALL,5)
+        self.friendSizer.Add(self.friendTextCtrl2,0,wx.ALL,5)
         self.stealSizer.Add(self.friendSizer, 0,wx.ALL,5)
 
         #-------------炼卡模式----------
-        # sb = wx.StaticBox(self,label = u'炼卡模式')
-        # self.refinedCardModeSizer = wx.StaticBoxSizer(sb,wx.HORIZONTAL)
-        # self.radio1 = wx.RadioButton(self, -1, u"普通炼卡", wx.DefaultPosition, style=wx.RB_GROUP)
-        # self.radio2 = wx.RadioButton(self, -1, "Ernie", wx.DefaultPosition)
-        # self.radio3 = wx.RadioButton(self, -1, "Bert", wx.DefaultPosition)
-        # self.refinedCardModeSizer.Add(self.radio1,0,wx.ALL,5)
-        # self.refinedCardModeSizer.Add(self.radio2,0,wx.ALL,5)
-        # self.refinedCardModeSizer.Add(self.radio3,0,wx.ALL,5)
+        sb = wx.StaticBox(self,label = u'炼卡模式')
+        self.refinedCardModeSizer = wx.StaticBoxSizer(sb,wx.HORIZONTAL)
+        self.radio1 = wx.RadioButton(self, -1, u"普通炼卡", wx.DefaultPosition, style=wx.RB_GROUP)
+        self.radio2 = wx.RadioButton(self, -1, u"疯狂练BOSS", wx.DefaultPosition)
+        self.radio1.Bind(wx.EVT_RADIOBUTTON,self.on_radio)
+        self.refinedCardModeSizer.Add(self.radio1,0,wx.ALL,5)
+        self.refinedCardModeSizer.Add(self.radio2,0,wx.ALL,5)
         
         #-------横向-----------------
         self.msgSizer = wx.BoxSizer(wx.VERTICAL)
+        self.msgSizer.Add(self.refinedCardModeSizer,0,wx.ALL,5)
         self.msgSizer.Add(self.sloveOperateSizer,0,wx.ALL,5)
         self.msgSizer.Add(self.stealSizer,0,wx.ALL,5)
-        #self.msgSizer.Add(self.refinedCardModeSizer,0,wx.ALL,5)
+
         #------
         self.qqShowSizer = wx.BoxSizer(wx.HORIZONTAL)
         self.qqShowSizer.Add(self.msgSizer,0,wx.ALL,5)
@@ -120,39 +122,72 @@ class Setting(wx.Frame):
         '''
         if constant.STEALFRIEND!=-1:
             try:
-                self.friendChoice.SetSelection(self.friendNameList.index(constant.STEALFRIEND))
+                print constant.STEALFRIEND
+                # SetSelection(self.friendNameList.index(constant.STEALFRIEND))
+                self.friendTextCtrl1.SetValue(str(constant.STEALFRIEND))
             except Exception:
                 pass
         if constant.STEALFRIEND2!=-1:
             try:
-                self.friendChoice2.SetSelection(self.friendNameList.index(constant.STEALFRIEND2))
+                # SetSelection(self.friendNameList.index(constant.STEALFRIEND2))
+                self.friendTextCtrl2.SetValue(str(constant.STEALFRIEND2))
             except Exception:
                 pass
+
+        if constant.REFINEDTYPE==1:
+            self.radio1.SetValue(True)
+            self.radio2.SetValue(False)
+        else:
+            self.radio1.SetValue(False)
+            self.radio2.SetValue(True)
         self.SetSizer(self.sizer)
         self.SetAutoLayout(1)
         self.Center()
         self.Show(True)
-        
+
+
+
+
+    def on_radio(self,e):
+        print 'value',self.radio1.GetValue()
+        e.Skip()
+
     '''保存配置
     '''    
     def save(self,e):
-        configFile = open('Mfkp_config.ini','w')
+
+        if self.radio1.GetValue():
+            constant.REFINEDTYPE = 1
+        else:
+            constant.REFINEDTYPE = 0
+
         constant.COLLECTTHEMEID = int(self.themeIdList[self.collectThemeChoice.GetSelection()])
         constant.COLLECTTHEMEID2 = int(self.themeIdList[self.collectThemeChoice2.GetSelection()])
-        constant.STEALFRIEND = int(self.friendNameList[self.friendChoice.GetSelection()])
-        constant.STEALFRIEND2 = int(self.friendNameList[self.friendChoice2.GetSelection()])
-        configFile.write('['+str(constant.USERNAME)+']'+'\n')
-        configFile.write('themeid='+str(constant.COLLECTTHEMEID)+'\n')
-        configFile.write('themeid2=' + str(constant.COLLECTTHEMEID2) + '\n')
-        configFile.write('friendid='+str(constant.STEALFRIEND)+'\n')
-        configFile.write('qqshow='+str(self.qqShowChoice.GetSelection())+'\n')
-        configFile.write('qqshowid='+str(self.qqShowChoice.GetStringSelection())+'\n')
-        configFile.write('qqshow=' + str(self.qqShowChoice2.GetSelection()) + '\n')
-        configFile.write('qqshowid=' + str(self.qqShowChoice2.GetStringSelection()) + '\n')
-        configFile.write('friendid2='+str(constant.STEALFRIEND2)+'\n')
-        configFile.close()
+        try:
+            constant.STEALFRIEND = int(self.friendTextCtrl1.GetValue())
+        except ValueError:
+            constant.STEALFRIEND = -1
+        try:
+            constant.STEALFRIEND2 = int(self.friendTextCtrl2.GetValue())
+        except ValueError:
+            constant.STEALFRIEND2 = -1
+        constant.QQSHOWSELECT = int(self.qqShowChoice.GetSelection())
+        constant.QQSHOWID = int(self.qqShowChoice.GetStringSelection())
+        constant.QQSHOWSELECT2 = int(self.qqShowChoice2.GetSelection())
+        constant.QQSHOWID2 = int(self.qqShowChoice2.GetStringSelection())
+        config = ConfigParser.ConfigParser()
+        config.add_section("userconfig")
+        config.set("userconfig","refinedtype",constant.REFINEDTYPE)
+        config.set("userconfig","themeid",constant.COLLECTTHEMEID)
+        config.set("userconfig","themeid2",constant.COLLECTTHEMEID2)
+        config.set("userconfig","friendid",constant.STEALFRIEND)
+        config.set("userconfig","qqshow",self.qqShowChoice.GetSelection())
+        config.set("userconfig","qqshowid",self.qqShowChoice.GetStringSelection())
+        config.set("userconfig","qqshow2",self.qqShowChoice2.GetSelection())
+        config.set("userconfig","qqshowid2",self.qqShowChoice2.GetStringSelection())
+        config.set("userconfig","friendid2",constant.STEALFRIEND2)
+        config.write(open('Mfkp_config.ini','w'))
         self.Destroy()
-        
 
     '''获取好友列表·
     '''
@@ -173,7 +208,7 @@ class Setting(wx.Frame):
     def getCollectTheme(self):
         self.themeIdList = []
         themeName = []# where type=?",(0,)
-        self.database.cu.execute("select * from cardtheme")
+        self.database.cu.execute("select * from cardtheme order by diff ASC ")
         result = self.database.cu.fetchall()
         for themeItem in result:
             themeName.append('['+str(themeItem[3])+u"星]"+themeItem[2])
