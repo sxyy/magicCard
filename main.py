@@ -527,8 +527,14 @@ class RefinedCard(wx.Panel):
                      self.tabTwo.sloveBoxList.Append(["",cardInfo[1],'1',str(cardNum),str(refinedCardNum)])
 
 
-     #更新个人信息
+
      def updateUserinfo(self,flag,info):
+         '''
+         更新个人信息
+         :param flag:
+         :param info:
+         :return:
+         '''
          if flag ==0:
              self.nickName.SetLabelText(u'昵称   '+info)
          elif flag ==1:

@@ -297,6 +297,7 @@ class MyCollectCard(threading.Thread):
                 #myslovelist.append(0)
             elif self.slovelist[i]==1:
                 if i==(len(self.slovelist)-1):
+                    print 'get steal ',self.windows.stealFriend[0]
                     self.postData = {
                             'ver':1,
                             'slotid':i,
@@ -315,6 +316,7 @@ class MyCollectCard(threading.Thread):
 
                         friend = self.windows.stealFriend[1]
                         index =1
+                    print 'get steal ',friend
                     self.postData = {
                             'ver':1,
                             'slotid':i,
@@ -401,11 +403,12 @@ class MyCollectCard(threading.Thread):
                     self.refineCard(stealCardId, self.findCardPosition(cardlist), cardlist,constant.STEALCARD,postData)
                 else:
                     base_url = constant.MOBILESTEALCARD
-                    base_url = base_url.replace('SID',urllib.quote(constant.SID))
+                    base_url = base_url.replace('SID','')#urllib.quote(constant.SID)
                     base_url =base_url.replace('TID',str(constant.COLLECTTHEMEID))
                     base_url =base_url.replace('FRENDID',str(stealfriend))
                     base_url =base_url.replace('CARDID',str(stealCardId))
-                    page_content = self.windows.steal_card_http.get_response(base_url).read().decode('utf-8')
+                    print base_url
+                    page_content = self.windows.myHttpRequest.get_response(base_url).read().decode('utf-8')
                     try:
                         print page_content
                     except:
@@ -416,7 +419,10 @@ class MyCollectCard(threading.Thread):
                         wx.CallAfter(self.windows.operateLogUpdate,u'成功将卡片'+self.windows.database.getCardInfo(stealCardId)[0]+u'放入好友卡炉。')
                         self.windows.stoveBox[slot] = stealCardId
                         self.emptySlove -=1
-                    else :
+                    elif u'系统繁忙' in page_content:
+                        wx.CallAfter(self.windows.operateLogUpdate,u'系统繁忙')
+                        self.emptySlove -=1
+                    else:
                         if u'验证码' in page_content:
                             print page_content
                             image_code  = re.findall('img src=\"(.*?)\" alt=',page_content,re.S)

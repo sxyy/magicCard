@@ -8,6 +8,7 @@ SESSION = ''
 LOGINFIELD = r'username'
 APPID = '549000912'
 APPID2 = '15403'
+APPID3 = '1600000084'
 DATABASE = 'test.db'
 REFINEDTYPE = 0
 COLLECTTHEMEID = -1
@@ -60,11 +61,14 @@ ZCGINFOURL = r'http://card.show.qq.com/cgi-bin/card_user_zcg?g_tk=GTK'
 SENDCARD = r'http://hydra.qzone.qq.com/cgi-bin/freegift/freegift_send?g_tk=GTK'
 ACTEGG = r'http://card.show.qq.com/cgi-bin/card_act_get_free?g_tk=GTK'
 
-ISNEEDCODEURL2 = r'http://check.ptlogin2.qq.com/check?pt_tea=1&uin=UIN&appid='+APPID2+'&ptlang=2052&r=RANDOM'
+ISNEEDCODEURL2 = r'http://check.ptlogin2.qq.com/check?pt_tea=1&uin=UIN&appid='+APPID2+'&ptlang=2052&r=RANDOM'#APP2
+ISNEEDCODEURL3 = r'http://check.ptlogin2.qq.com/check?pt_tea=1&uin=UIN&appid='+APPID3+'&ptlang=2052&r=RANDOM'#APP2
 ISNEEDCODEURL = r'http://check.ptlogin2.qq.com/check?uin=UIN&regmaster=&appid='+APPID+'&ptlang=2052&pt_tea=1&login_sig=&r=RANDOM '
 CODEPIC = r'http://captcha.qq.com/getimage?aid='+APPID+'&r=RANDOM&cap_cd=CD&uin=UIN'
-CODEPIC2 = r'http://captcha.qq.com/getimage?aid='+APPID2+'&r=RANDOM&cap_cd=CD&uin=UIN'
+CODEPIC2 = r'http://captcha.qq.com/getimage?aid='+APPID2+'&r=RANDOM&cap_cd=CD&uin=UIN'#http://mfkp.qzapp.z.qq.com/qshow/cgi-bin/wl_card_mainpage
+CODEPIC3 = r'http://captcha.qq.com/getimage?aid='+APPID3+'&r=RANDOM&cap_cd=CD&uin=UIN'
 LOGINURL = r'http://ptlogin2.qq.com/login?u=USERNAME&p=PASSWORD&pt_vcode_v1=0&pt_verifysession_v1=VERIFYSESSION&pt_randsalt=0&login_sig=&verifycode=CODE&mibao_css=m_qzone&aid=549000912&u1=http%3A%2F%2Fimgcache.qq.com%2Fqzone%2Fv5%2Floginsucc.html%3Fpara%3Dizone&ptredirect=1&h=1&from_ui=1&fp=loginerroralert&g=1&t=1&daid=5&pt_qzone_sig=1'
+LOGINURL2 = r'http://ptlogin2.qq.com/login?pt_vcode_v1=0&pt_verifysession_v1=VERIFYSESSION&verifycode=CODE&u=USERNAME&p=PASSWORD&pt_randsalt=0&ptlang=2052&low_login_enable=0&u1=http%3A%2F%2Fmfkp.qzapp.z.qq.com%2Fqshow%2Fcgi-bin%2Fwl_card_mainpage&from_ui=1&fp=loginerroralert&device=2&aid=1600000084&pt_3rd_aid=0&ptredirect=1&h=1&g=1&pt_uistyle=9&'
 QQLOGINURL = r'http://ptlogin2.qq.com/login?pt_vcode_v1=0&pt_verifysession_v1=VERIFYSESSION&verifycode=CODE&u=USERNAME&p=PASSWORD&pt_randsalt=0&ptlang=2052&low_login_enable=0&u1=http://info.3g.qq.com&from_ui=1&fp=loginerroralert&device=2&aid=15403&pt_ttype=1&pt_3rd_aid=0&ptredirect=1&h=1&g=1&pt_uistyle=9& '
 CARDLOGINURL = r'http://card.show.qq.com/cgi-bin/card_user_mainpage?g_tk=GTK '
 SALECARD = r'http://card.show.qq.com/cgi-bin/card_market_npc_sell?g_tk=GTK '

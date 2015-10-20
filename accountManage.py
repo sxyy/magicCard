@@ -111,8 +111,8 @@ class AccountManage(wx.Panel):
         self.head_list = [u'序号',u'账号',u'昵称',u'登陆状态']
         self.exchangeBoxlistHead = [u'换',u'卡片',u'卡片类型',u'价格']
         self.safeBoxlistHead = [u'保',u'卡片',u'卡片类型',u'价格']
-        self.operate_list = [u'一键领取登陆礼包',u'一键领取100面值卡片',u'一键送礼物卡',u'一键小号420魔力',u'一键国庆登陆领礼包',u'一键领取国庆3天登录礼包',u'一键领取国庆7天登录礼包',u'一键领取国庆10天登录礼包',
-                             u'一键领取国庆12天登录礼包',u'一键查询茱萸个数',u'一键登高',u'一键练卡']
+        self.operate_list = [u'一键领取登陆礼包',u'一键领取100面值卡片',u'一键送礼物卡',u'一键小号420魔力',u'一键查询茱萸个数',u'一键登高',u'一键兑换喜庆重阳礼包',u'一键兑换祝福重阳礼包',
+                             u'一键兑换美味面条',u'一键兑换美味面条并入册']
         self.myHttpRequest = myhttp.MyHttpRequest()
         #当前的选择的账号
 
@@ -442,22 +442,24 @@ class AccountManage(wx.Panel):
 
             thread.start_new_thread(self.accountGetMana,())
         elif self.account_choice.GetSelection()==4:
-            thread.start_new_thread(self.gq_login,())
+            thread.start_new_thread(self.act_get_score,())
             pass
         elif self.account_choice.GetSelection()==5:
-            thread.start_new_thread(self.get_gq_gift,(0,))
+            thread.start_new_thread(self.act_egg,())
         elif self.account_choice.GetSelection()==6:
-            thread.start_new_thread(self.get_gq_gift,(1,))
+            thread.start_new_thread(self.act_exchange_score,(0,))
             pass
         elif self.account_choice.GetSelection()==7:
-            thread.start_new_thread(self.get_gq_gift,(2,))
+            thread.start_new_thread(self.act_exchange_score,(1,))
         elif self.account_choice.GetSelection()==8:
-            thread.start_new_thread(self.get_gq_gift,(3,))
-
+            thread.start_new_thread(self.act_exchange_score,(2,))
         elif self.account_choice.GetSelection()==9:
-            thread.start_new_thread(self.act_get_score,())
-        elif self.account_choice.GetSelection()==10:
-            thread.start_new_thread(self.act_egg,())
+            thread.start_new_thread(self.act_exchange_score,(2,True))
+
+        # elif self.account_choice.GetSelection()==9:
+        #     thread.start_new_thread(self.act_get_score,())
+        # elif self.account_choice.GetSelection()==10:
+        #     thread.start_new_thread(self.act_egg,())
         e.Skip()
 
 
@@ -723,7 +725,7 @@ class AccountManage(wx.Panel):
             self.account_send_gift_text.Enable(False)
         e.Skip()
 
-    def act_exchange_score(self,m_id):
+    def act_exchange_score(self,m_id,is_complete=False):
         '''
         积分兑换礼物
         :param m_id:
@@ -734,30 +736,31 @@ class AccountManage(wx.Panel):
                 value =  self.__class__.account_http_dic[account]
             except KeyError:
                 continue
-            base_url =  commons.getUrl(constant.GQACTIVITY,value)
+            base_url =  commons.getUrl(constant.ACTEGG,value)
             post_data = {
-                'act':5,
+                'act':6,
                 'id':m_id
             }
             page_content = value.get_response(base_url,post_data).read().decode('utf-8')
             if 'sucess' in page_content:
 
                 wx.CallAfter(self.operateLogUpdate,str(account)+u'兑换成功')
+                if m_id==2 and is_complete:
+                    base_url =constant.COMMITCARD
+                    base_url = base_url.replace('SID', urllib.quote(self.accout_sid_dic[account]))
+                    base_url = base_url.replace('THEMEID',str(428))
+                    page_content = value.get_response(base_url)
+                    result_content = page_content.read().decode('utf-8')
+                    print result_content
+                    logging.info(result_content)
+                    if u'成功放入集卡册' in result_content:
+                        wx.CallAfter(self.operateLogUpdate,u'提交套卡成功')
+                    elif u'找不到相应的记录' in result_content:
+                        wx.CallAfter(self.operateLogUpdate,u'提交失败，请检查卡片是否齐全')
 
             else:
                 wx.CallAfter(self.operateLogUpdate,str(account)+u'兑换失败')
-            if m_id==11:
-                base_url =constant.COMMITCARD
-                base_url = base_url.replace('SID', urllib.quote(self.accout_sid_dic[account]))
-                base_url = base_url.replace('THEMEID',str(425))
-                page_content = value.get_response(base_url)
-                result_content = page_content.read().decode('utf-8')
-                print result_content
-                logging.info(result_content)
-                if u'成功放入集卡册' in result_content:
-                    wx.CallAfter(self.operateLogUpdate,u'提交套卡成功')
-                elif u'找不到相应的记录' in result_content:
-                    wx.CallAfter(self.operateLogUpdate,u'提交失败，请检查卡片是否齐全')
+
         wx.CallAfter(self.operateLogUpdate,u'一键任务完成')
 
     def act_open_happy_card(self):
