@@ -83,11 +83,12 @@ class GetInfoThread(threading.Thread):
             constant.STOREBOXNUM = int(self.soup.storebox['cur'])
             self.windows.storeBox = [0]*constant.STOREBOXNUM
         elif self.flag==constant.STOVEBOX:
-            self.windows.stealFriend = [0, 0]
             if constant.ISRED==0:
                 constant.SLOVENUM = int(self.soup.stovebox['cur'])-1
+                self.windows.stealFriend = [0]
             else:
                 constant.SLOVENUM = int(self.soup.stovebox['cur'])
+                self.windows.stealFriend = [0, 0]
             self.windows.stoveBox = [0]*constant.SLOVENUM
             self.cardcomplete = [0] * constant.SLOVENUM
             self.childlist = self.soup.stovebox.children

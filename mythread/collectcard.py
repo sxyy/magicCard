@@ -72,7 +72,6 @@ class MyCollectCard(threading.Thread):
         '''  
         
         nowtime = time.localtime(time.time())
-        # if 8<=int(time.strftime('%H',nowtime))<22:
         if constant.ISRED==1:
             self.stealSlove(-2)
         self.stealSlove(-1)
@@ -95,13 +94,11 @@ class MyCollectCard(threading.Thread):
             collectCardNum = 0
             if constant.REFINEDTYPE==1:
                 for cardItem in collectCardList:
-
                     cardId = cardItem[0]
                     if self.cardExist(0,cardId):
                         collectCardNum+=1
                         continue
                     else:
-
                         self.windows.database.cu.execute("select content1,content2,content3 from cardrelation where pid=? ",(cardId,))
                         cardcontentlist = self.windows.database.cu.fetchone()
                         self.searchCard(cardcontentlist,cardId)
@@ -297,17 +294,17 @@ class MyCollectCard(threading.Thread):
                 #myslovelist.append(0)
             elif self.slovelist[i]==1:
                 if i==(len(self.slovelist)-1):
-                    print 'get steal ',self.windows.stealFriend[0]
+                    print 'get steal ',self.windows.stealFriend[-1]
                     self.postData = {
                             'ver':1,
                             'slotid':i,
                             'code':'',
                             'slottype':1,
                             'uin':constant.USERNAME,
-                            'opuin':self.windows.stealFriend[0]
+                            'opuin':self.windows.stealFriend[-1]
                     }
                     base_url = self.windows.getUrl(constant.GETSTEALCARD)
-                    del self.windows.stealFriend[0]
+                    del self.windows.stealFriend[-1]
                 elif constant.ISRED==1 and i==(len(self.slovelist)-2):
                     if len(self.windows.stealFriend)<=1:
                         friend = self.windows.stealFriend[0]
@@ -356,11 +353,6 @@ class MyCollectCard(threading.Thread):
     '''
     def stealSlove(self,slot):
         print u'进行偷炉'
-        # stealfriend = 0
-        if slot == -2:
-            stealfriend = constant.STEALFRIEND2
-        else:
-            stealfriend = constant.STEALFRIEND
         print u'卡炉信息',self.windows.stoveBox
         print u'偷炉信息',self.windows.stealFriend
         if self.windows.stoveBox[slot]==0:
@@ -402,6 +394,10 @@ class MyCollectCard(threading.Thread):
                     self.windows.stealFriend.append(stealfriend)
                     self.refineCard(stealCardId, self.findCardPosition(cardlist), cardlist,constant.STEALCARD,postData)
                 else:
+                    if constant.STEALFRIEND in self.windows.stealFriend:
+                        stealfriend = constant.STEALFRIEND2
+                    else:
+                        stealfriend = constant.STEALFRIEND
                     base_url = constant.MOBILESTEALCARD
                     base_url = base_url.replace('SID','')#urllib.quote(constant.SID)
                     base_url =base_url.replace('TID',str(constant.COLLECTTHEMEID))
@@ -692,7 +688,13 @@ class MyCollectCard(threading.Thread):
                     'type':1,
         }
         page_content = self.windows.myHttpRequest.get_response(base_url,postData).read().decode('utf-8')
-        print u'翻牌结果',page_content
+        page_content_json = json.loads(page_content)
+        try:
+            pack_str = page_content_json['pack_str']
+            print 'result',pack_str
+            wx.CallAfter(self.windows.operateLogUpdate,u'翻牌结果:'+commons.getPrizeInfo(pack_str))
+        except KeyError:
+            wx.CallAfter(self.windows.operateLogUpdate,page_content_json['desc'])
         logging.info(u'翻牌结果'+page_content)
 
     #判断卡片是否存在

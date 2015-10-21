@@ -9,11 +9,7 @@ from commonlib import constant
 from commonlib import myhttp,commons
 import accountManage,accountsupport,searchcard
 import logging,StringIO,ConfigParser
-from mythread import searchCardThread,flashCardThread,commitThread,flashCardToFlashCard
 import datetime,xlwt,sys,os
-
-import wx.lib.hyperlink as hyperlink
-
 
 class MyDialog(wx.Dialog):
     def __init__(self, image_code):
