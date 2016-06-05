@@ -24,8 +24,7 @@ class MyCollectCard(threading.Thread):
         self.flag = False
         self.cardInSlove = False
         self.cardInSloveList =[]
-        #self.windows.zcgInfoDic
-        print u'偷炉信息',self.windows.stealFriend
+        print u'偷炉信息',self.windows.friend_complete
 
     
     def run(self):
@@ -33,9 +32,9 @@ class MyCollectCard(threading.Thread):
         
         self.getRefineCard()
 
-        if constant.ISCOMPLETECOMMIT==1:
+        if constant.ISCOMPLETECOMMIT==1 and self.emptySlove>0:
             self.checkTheme2AndCommit()
-        
+        print self.flag
         if constant.RANDCHANCE>=10:
             for i in  range(5):
                 wx.CallAfter(self.windows.drawCard)
@@ -72,24 +71,25 @@ class MyCollectCard(threading.Thread):
         '''  
         
         nowtime = time.localtime(time.time())
-        if constant.ISRED==1:
-            self.stealSlove(-2)
+        # if constant.ISRED==1:
+        #     self.stealSlove(-2)
         self.stealSlove(-1)
             
-        maxEmptySlove = 2
-        '''这里不仅要判断时间并且防止另外一种情况当偷炉卡未没收回，但是有一个炉子已经空了的情况。
-        '''
-        if (8<=int(time.strftime('%H',nowtime))<22) or self.windows.stoveBox[-1]!=0 or constant.STEALFRIEND==-1:
-            maxEmptySlove -= 1
-        if constant.ISRED==1 and ((8<=int(time.strftime('%H',nowtime))<22) or self.windows.stoveBox[-2]!=0) or constant.STEALFRIEND2==-1 :
-            maxEmptySlove -= 1
-        elif constant.ISRED!=1:
-            maxEmptySlove -= 1
-        
-        print self.emptySlove,'  ',maxEmptySlove
-        self.cardInSlove = False
-        self.cardInSloveList =[]
-        while self.emptySlove>maxEmptySlove and constant.COLLECTTHEMEID!=-1:
+        # maxEmptySlove = 2
+        # '''这里不仅要判断时间并且防止另外一种情况当偷炉卡未没收回，但是有一个炉子已经空了的情况。
+        # '''
+        # if (8<=int(time.strftime('%H',nowtime))<22) or self.windows.stoveBox[-1]!=0 or constant.STEALFRIEND==-1:
+        #     maxEmptySlove -= 1
+        # if constant.ISRED==1 and ((8<=int(time.strftime('%H',nowtime))<22) or self.windows.stoveBox[-2]!=0) or constant.STEALFRIEND2==-1 :
+        #     maxEmptySlove -= 1
+        # elif constant.ISRED!=1:
+        #     maxEmptySlove -= 1
+        #
+        # print self.emptySlove,'  ',maxEmptySlove
+        # self.cardInSlove = False
+        # self.cardInSloveList =[]
+
+        while self.emptySlove>0 and constant.COLLECTTHEMEID!=-1:
             self.flag = False
             collectCardNum = 0
             if constant.REFINEDTYPE==1:
@@ -166,6 +166,7 @@ class MyCollectCard(threading.Thread):
                 self.get_sid()
 
             if constant.SID=='-1':
+                
                wx.CallAfter(self.windows.updateLog,u'无法获取到用户的sid')
             else:
                 base_url =constant.COMMITCARD
@@ -269,7 +270,7 @@ class MyCollectCard(threading.Thread):
     def getRefineCard(self):
         
         print u'卡炉卡片完成情况',self.slovelist
-        print u'偷炉信息',self.windows.stealFriend
+        print u'偷炉信息',self.windows.friend_complete
 
         #这里需要增加收获czg的卡片
 
@@ -288,59 +289,92 @@ class MyCollectCard(threading.Thread):
                     if mojing_list[item]!=0:
                         wx.CallAfter(self.windows.operateLogUpdate,u'收获珍藏阁物品,获得'+constant.MOJINGDICT[item]+str(mojing_list[item])+u'个')
                         self.windows.czgComplete[i] = -1
-        for i,cardId in enumerate(self.windows.stoveBox):
-            if cardId==0:
-                self.emptySlove +=1
-                #myslovelist.append(0)
-            elif self.slovelist[i]==1:
-                if i==(len(self.slovelist)-1):
-                    print 'get steal ',self.windows.stealFriend[-1]
-                    self.postData = {
-                            'ver':1,
-                            'slotid':i,
-                            'code':'',
-                            'slottype':1,
-                            'uin':constant.USERNAME,
-                            'opuin':self.windows.stealFriend[-1]
-                    }
-                    base_url = self.windows.getUrl(constant.GETSTEALCARD)
-                    del self.windows.stealFriend[-1]
-                elif constant.ISRED==1 and i==(len(self.slovelist)-2):
-                    if len(self.windows.stealFriend)<=1:
-                        friend = self.windows.stealFriend[0]
-                        index = 0
-                    else:
 
-                        friend = self.windows.stealFriend[1]
-                        index =1
-                    print 'get steal ',friend
-                    self.postData = {
-                            'ver':1,
-                            'slotid':i,
-                            'code':'',
-                            'slottype':1,
-                            'uin':constant.USERNAME,
-                            'opuin':friend
-                    }
-                    base_url = self.windows.getUrl(constant.GETSTEALCARD)
-                    del self.windows.stealFriend[index]
-                else:
-                    self.postData = {
-                            'ver':1,
-                            'slotid':i,
-                            'code':'',
-                            'slottype':1,
-                            'uin':constant.USERNAME
-                    }
-                    base_url = self.windows.getUrl(constant.REFINEDCARD)
+        for key,value in self.windows.friend_complete.items():
+            if value==1:
+                print 'get steal ',key
+                self.postData = {
+                        'ver':1,
+                        'slotid':self.windows.friend_slove[key],
+                        'code':'',
+                        'slottype':1,
+                        'uin':constant.USERNAME,
+                        'opuin':key
+                }
+                base_url = self.windows.getUrl(constant.GETSTEALCARD)
                 page_content = self.windows.myHttpRequest.get_response(base_url,self.postData)
                 result = page_content.read().decode('utf-8')
                 print u'收获卡片返回信息',result
                 logging.info(u'收获卡片返回信息'+result)
-                if i!=(len(self.slovelist)-1):
-                    self.fanpai()
                 soup = BeautifulSoup(result)
                 wx.CallAfter(self.windows.operateLogUpdate,u'收获卡片 :'+self.windows.database.getCardInfo(soup.card['id'])[0])
+                self.windows.stoveBox[self.windows.friend_slove[key]] = 0
+                self.windows.storeBox[int(soup.card['slot'])] = int(soup.card['id'])
+                wx.CallAfter(self.windows.updateStoreBox,soup.card['id'],soup.card['slot'],self.windows.friend_slove[key])
+                self.windows.friend_complete[key] = -1
+                time.sleep(1)
+
+        #这里收获主炉卡片
+        for i,cardId in enumerate(self.windows.stoveBox):
+            if i>=len(self.slovelist):
+                break
+            if cardId==0:
+                self.emptySlove +=1
+                #myslovelist.append(0)
+            elif self.slovelist[i]==1:
+                # if i==(len(self.slovelist)-1):
+                #     continue
+                    # print 'get steal ',self.windows.stealFriend[-1]
+                    # self.postData = {
+                    #         'ver':1,
+                    #         'slotid':i,
+                    #         'code':'',
+                    #         'slottype':1,
+                    #         'uin':constant.USERNAME,
+                    #         'opuin':self.windows.stealFriend[-1]
+                    # }
+                    # base_url = self.windows.getUrl(constant.GETSTEALCARD)
+                    # del self.windows.stealFriend[-1]
+                # elif constant.ISRED==1 and i==(len(self.slovelist)-2):
+                #     continue
+                    # if len(self.windows.stealFriend)<=1:
+                    #     friend = self.windows.stealFriend[0]
+                    #     index = 0
+                    # else:
+                    #
+                    #     friend = self.windows.stealFriend[1]
+                    #     index =1
+                    # print 'get steal ',friend
+                    # self.postData = {
+                    #         'ver':1,
+                    #         'slotid':i,
+                    #         'code':'',
+                    #         'slottype':1,
+                    #         'uin':constant.USERNAME,
+                    #         'opuin':friend
+                    # }
+                    # base_url = self.windows.getUrl(constant.GETSTEALCARD)
+                    # del self.windows.stealFriend[index]
+                # else:
+                self.postData = {
+                        'ver':1,
+                        'slotid':i,
+                        'code':'',
+                        'slottype':1,
+                        'uin':constant.USERNAME
+                }
+                base_url = self.windows.getUrl(constant.REFINEDCARD)
+                page_content = self.windows.myHttpRequest.get_response(base_url,self.postData)
+                result = page_content.read().decode('utf-8')
+                print u'收获卡片返回信息',result
+                logging.info(u'收获卡片返回信息'+result)
+                soup = BeautifulSoup(result)
+                wx.CallAfter(self.windows.operateLogUpdate,u'收获卡片 :'+self.windows.database.getCardInfo(soup.card['id'])[0])
+                #TODO: 翻牌
+                try:
+                    self.fanpai()
+                except:
+                    pass
                 self.windows.stoveBox[i] = 0
                 self.windows.storeBox[int(soup.card['slot'])] = int(soup.card['id'])
                 wx.CallAfter(self.windows.updateStoreBox,soup.card['id'],soup.card['slot'],i)
@@ -354,117 +388,135 @@ class MyCollectCard(threading.Thread):
     def stealSlove(self,slot):
         print u'进行偷炉'
         print u'卡炉信息',self.windows.stoveBox
-        print u'偷炉信息',self.windows.stealFriend
-        if self.windows.stoveBox[slot]==0:
-            stealCardId = self.getRandomStealCardId()
-            print 'stealCardId',stealCardId
-            if stealCardId!=-1:
-                if constant.SID=='-1':
-                    self.get_sid()
-                if constant.SID=='-1':
-                    wx.CallAfter(self.windows.operateLogUpdate,u'无法获取到用户的sid')
-                    self.windows.database.cu.execute("select content1,content2,content3 from cardrelation where pid=? ",(stealCardId,))
-                    cardlist = self.windows.database.cu.fetchone()
-                    for cardId in cardlist:
-                        if not (cardId in self.windows.storeBox or cardId in self.windows.exchangeBox):
-                            wx.CallAfter(self.windows.buyCard,cardId)
-                        time.sleep(1)
-                    slotlist = self.findCardPosition(cardlist)
-                    print 'slotlist',slotlist
-                    if constant.STEALFRIEND in self.windows.stealFriend:
-                        stealfriend = constant.STEALFRIEND2
-                    else:
-                        stealfriend = constant.STEALFRIEND
+        print u'偷炉信息',self.windows.friend_complete
+        print u'偷炉好友信息',self.windows.friend_slove
 
-                    postData = {
-                    'targetid':stealCardId,
-                    'slot1':slotlist[0],
-                    'slottype1':slotlist[1],
-                    'slot2':slotlist[2],
-                    'slottype2':slotlist[3],
-                    'slot3':slotlist[4],
-                    'slottype3':slotlist[5],
-                    'bflash':0,
-                    'ver':1,
-                    'targettype':1,
-                    'themeid':constant.COLLECTTHEMEID,
-                    'slottype':1,
-                    'opuin':stealfriend,
-                    }
-                    self.windows.stealFriend.append(stealfriend)
-                    self.refineCard(stealCardId, self.findCardPosition(cardlist), cardlist,constant.STEALCARD,postData)
-                else:
-                    if constant.STEALFRIEND in self.windows.stealFriend:
-                        stealfriend = constant.STEALFRIEND2
-                    else:
-                        stealfriend = constant.STEALFRIEND
-                    base_url = constant.MOBILESTEALCARD
-                    base_url = base_url.replace('SID','')#urllib.quote(constant.SID)
-                    base_url =base_url.replace('TID',str(constant.COLLECTTHEMEID))
-                    base_url =base_url.replace('FRENDID',str(stealfriend))
-                    base_url =base_url.replace('CARDID',str(stealCardId))
-                    print base_url
-                    page_content = self.windows.myHttpRequest.get_response(base_url).read().decode('utf-8')
-                    try:
-                        print page_content
-                    except:
-                        pass
-                    logging.info(page_content)
-                    self.windows.stealFriend.append(stealfriend)
-                    if u'您成功的将卡片放入好友的炼卡' in page_content:
-                        wx.CallAfter(self.windows.operateLogUpdate,u'成功将卡片'+self.windows.database.getCardInfo(stealCardId)[0]+u'放入好友卡炉。')
-                        self.windows.stoveBox[slot] = stealCardId
-                        self.emptySlove -=1
-                    elif u'系统繁忙' in page_content:
-                        wx.CallAfter(self.windows.operateLogUpdate,u'系统繁忙')
-                        self.emptySlove -=1
-                    else:
-                        if u'验证码' in page_content:
-                            print page_content
-                            image_code  = re.findall('img src=\"(.*?)\" alt=',page_content,re.S)
-                            page_content2 = self.windows.steal_card_http.get_response(image_code[0]).read()
-                            mysid = re.findall('name=\"sid\" value=\"(.*?)\"/>',page_content,re.S)
-                            r = re.findall('name=\"r\" value=\"(.*?)\"/>',page_content,re.S)
-                            extend = re.findall('name=\"extend\" value=\"(.*?)\"/>',page_content,re.S)
-                            r_sid = re.findall('name=\"r_sid\" value=\"(.*?)\"/>',page_content,re.S)
-                            rip = re.findall('name=\"rip\" value=\"(.*?)\"/>',page_content,re.S)
-                            login_url =  re.findall('name=\"login_url\" value=\"(.*?)\"/>',page_content,re.S)
-                            hexpwd =  re.findall('name=\"hexpwd\" value=\"(.*?)\"/>',page_content,re.S)
-                            wx.CallAfter(self.windows.show_image_code,page_content2)
-                            print image_code
-                            while constant.NEWCODE=='':
-                                time.sleep(1)
-                            print constant.NEWCODE
-                            my_post_data = {
-                                'qq':str(constant.USERNAME),
-                                'u_token':str(constant.USERNAME),
-                                'hexpwd':hexpwd[0],
-                                'hexp':'true',
-                                'sid':mysid[0],
-                                'auto':'0',
-                                'loginTitle':u'手机腾讯网'.encode('utf-8'),
-                                'qfrom':'',
-                                'q_status':'20',
-                                'r':r[0],
-                                'loginType':'3',
-                                'bid_code':'qqchatLogin',
-                                'extend':extend[0],
-                                'r_sid':r_sid[0],
-                                'rip':rip[0],
-                                'modifySKey':'0',
-                                'bid':'0',
-                                'login_url':login_url[0],
-                                'verify':constant.NEWCODE,
-                                'submitlogin':u'马上登录'.encode('utf-8')
-                            }
-                            page_content = self.windows.steal_card_http.get_response(constant.GETSID,my_post_data).read().decode('utf-8')
-                            print page_content
-                            page_content = self.windows.steal_card_http.get_response(base_url).read().decode('utf-8')
-                            print page_content
-
-            else:
-                self.emptySlove -=1
-                self.windows.stoveBox[-1] =stealCardId
+        for key,value in self.windows.friend_complete.items():
+            if value==-1:
+                stealCardId = self.getRandomStealCardId()
+                base_url = constant.MOBILESTEALCARD
+                base_url = base_url.replace('SID','')#urllib.quote(constant.SID)
+                base_url =base_url.replace('TID',str(constant.COLLECTTHEMEID))
+                base_url =base_url.replace('FRENDID',key)
+                base_url =base_url.replace('CARDID',str(stealCardId))
+                print base_url
+                page_content = self.windows.myHttpRequest.get_response(base_url).read().decode('utf-8')
+                if u'您成功的将卡片放入好友的炼卡' in page_content:
+                    wx.CallAfter(self.windows.operateLogUpdate,u'成功将卡片'+self.windows.database.getCardInfo(stealCardId)[0]+u'放入好友卡炉。')
+                    self.windows.stoveBox[self.windows.friend_slove[key]] = stealCardId
+                    self.windows.friend_complete[key] = 0
+                elif u'系统繁忙' in page_content:
+                    wx.CallAfter(self.windows.operateLogUpdate,u'系统繁忙')
+        # if self.windows.stoveBox[slot]==0:
+        #
+        #     print 'stealCardId',stealCardId
+        #     if stealCardId!=-1:
+        #         if constant.SID=='-1':
+        #             self.get_sid()
+        #         if constant.SID=='-1':
+        #             wx.CallAfter(self.windows.operateLogUpdate,u'无法获取到用户的sid')
+        #             self.windows.database.cu.execute("select content1,content2,content3 from cardrelation where pid=? ",(stealCardId,))
+        #             cardlist = self.windows.database.cu.fetchone()
+        #             for cardId in cardlist:
+        #                 if not (cardId in self.windows.storeBox or cardId in self.windows.exchangeBox):
+        #                     wx.CallAfter(self.windows.buyCard,cardId)
+        #                 time.sleep(1)
+        #             slotlist = self.findCardPosition(cardlist)
+        #             print 'slotlist',slotlist
+        #             if str(constant.STEALFRIEND) in self.windows.stealFriend:
+        #                 stealfriend = constant.STEALFRIEND2
+        #             else:
+        #                 stealfriend = constant.STEALFRIEND
+        #
+        #             postData = {
+        #             'targetid':stealCardId,
+        #             'slot1':slotlist[0],
+        #             'slottype1':slotlist[1],
+        #             'slot2':slotlist[2],
+        #             'slottype2':slotlist[3],
+        #             'slot3':slotlist[4],
+        #             'slottype3':slotlist[5],
+        #             'bflash':0,
+        #             'ver':1,
+        #             'targettype':1,
+        #             'themeid':constant.COLLECTTHEMEID,
+        #             'slottype':1,
+        #             'opuin':stealfriend,
+        #             }
+        #             self.windows.stealFriend.append(stealfriend)
+        #             self.refineCard(stealCardId, self.findCardPosition(cardlist), cardlist,constant.STEALCARD,postData)
+        #         else:
+        #             if str(constant.STEALFRIEND) in self.windows.stealFriend:
+        #                 stealfriend = constant.STEALFRIEND2
+        #             else:
+        #                 stealfriend = constant.STEALFRIEND
+        #             base_url = constant.MOBILESTEALCARD
+        #             base_url = base_url.replace('SID','')#urllib.quote(constant.SID)
+        #             base_url =base_url.replace('TID',str(constant.COLLECTTHEMEID))
+        #             base_url =base_url.replace('FRENDID',str(stealfriend))
+        #             base_url =base_url.replace('CARDID',str(stealCardId))
+        #             print base_url
+        #             page_content = self.windows.myHttpRequest.get_response(base_url).read().decode('utf-8')
+        #             try:
+        #                 print page_content
+        #             except:
+        #                 pass
+        #             logging.info(page_content)
+        #             self.windows.stealFriend.append(stealfriend)
+        #             if u'您成功的将卡片放入好友的炼卡' in page_content:
+        #                 wx.CallAfter(self.windows.operateLogUpdate,u'成功将卡片'+self.windows.database.getCardInfo(stealCardId)[0]+u'放入好友卡炉。')
+        #                 self.windows.stoveBox[slot] = stealCardId
+        #                 self.emptySlove -=1
+        #             elif u'系统繁忙' in page_content:
+        #                 wx.CallAfter(self.windows.operateLogUpdate,u'系统繁忙')
+        #                 self.emptySlove -=1
+        #             else:
+        #                 if u'验证码' in page_content:
+        #                     print page_content
+        #                     image_code  = re.findall('img src=\"(.*?)\" alt=',page_content,re.S)
+        #                     page_content2 = self.windows.steal_card_http.get_response(image_code[0]).read()
+        #                     mysid = re.findall('name=\"sid\" value=\"(.*?)\"/>',page_content,re.S)
+        #                     r = re.findall('name=\"r\" value=\"(.*?)\"/>',page_content,re.S)
+        #                     extend = re.findall('name=\"extend\" value=\"(.*?)\"/>',page_content,re.S)
+        #                     r_sid = re.findall('name=\"r_sid\" value=\"(.*?)\"/>',page_content,re.S)
+        #                     rip = re.findall('name=\"rip\" value=\"(.*?)\"/>',page_content,re.S)
+        #                     login_url =  re.findall('name=\"login_url\" value=\"(.*?)\"/>',page_content,re.S)
+        #                     hexpwd =  re.findall('name=\"hexpwd\" value=\"(.*?)\"/>',page_content,re.S)
+        #                     wx.CallAfter(self.windows.show_image_code,page_content2)
+        #                     print image_code
+        #                     while constant.NEWCODE=='':
+        #                         time.sleep(1)
+        #                     print constant.NEWCODE
+        #                     my_post_data = {
+        #                         'qq':str(constant.USERNAME),
+        #                         'u_token':str(constant.USERNAME),
+        #                         'hexpwd':hexpwd[0],
+        #                         'hexp':'true',
+        #                         'sid':mysid[0],
+        #                         'auto':'0',
+        #                         'loginTitle':u'手机腾讯网'.encode('utf-8'),
+        #                         'qfrom':'',
+        #                         'q_status':'20',
+        #                         'r':r[0],
+        #                         'loginType':'3',
+        #                         'bid_code':'qqchatLogin',
+        #                         'extend':extend[0],
+        #                         'r_sid':r_sid[0],
+        #                         'rip':rip[0],
+        #                         'modifySKey':'0',
+        #                         'bid':'0',
+        #                         'login_url':login_url[0],
+        #                         'verify':constant.NEWCODE,
+        #                         'submitlogin':u'马上登录'.encode('utf-8')
+        #                     }
+        #                     page_content = self.windows.steal_card_http.get_response(constant.GETSID,my_post_data).read().decode('utf-8')
+        #                     print page_content
+        #                     page_content = self.windows.steal_card_http.get_response(base_url).read().decode('utf-8')
+        #                     print page_content
+        #
+        #     else:
+        #         self.emptySlove -=1
+        #         self.windows.stoveBox[-1] =stealCardId
 
 
 
@@ -611,23 +663,27 @@ class MyCollectCard(threading.Thread):
         for cardcontent in cardlist: 
            
             if cardcontent in self.windows.exchangeBox:
-                cardName = self.windows.database.getCardInfo(cardcontent)[0]
-                for i in range(constant.EXCHANGEBOXNUM):
-                    if self.windows.exchangeBoxlist.GetItemText(i,1)==cardName:
-                        slotlist.append(i)
-                        logging.info('find exchangbox cardid')
-                        print 'find exchangbox cardid'
-                        slotlist.append(0)
-                        break
+                slotlist.append(self.windows.exchangeBox.index(cardcontent))
+                slotlist.append(0)
+                # cardName = self.windows.database.getCardInfo(cardcontent)[0]
+                # for i in range(constant.EXCHANGEBOXNUM):
+                #     if self.windows.exchangeBoxlist.GetItemText(i,1)==cardName:
+                #         slotlist.append(i)
+                #         logging.info('find exchangbox cardid')
+                #         print 'find exchangbox cardid'
+                #         slotlist.append(0)
+                #         break
             elif cardcontent in self.windows.storeBox:
-                cardName = self.windows.database.getCardInfo(cardcontent)[0]
-                for i in range(constant.STOREBOXNUM):
-                    if self.windows.safeBoxlist.GetItemText(i,1)==cardName:
-                        slotlist.append(i)
-                        logging.info('find storeBox cardid')
-                        print 'find storeBox cardid'
-                        slotlist.append(1)
-                        break
+                slotlist.append(self.windows.storeBox.index(cardcontent))
+                slotlist.append(1)
+                # cardName = self.windows.database.getCardInfo(cardcontent)[0]
+                # for i in range(constant.STOREBOXNUM):
+                #     if self.windows.safeBoxlist.GetItemText(i,1)==cardName:
+                #         slotlist.append(i)
+                #         logging.info('find storeBox cardid')
+                #         print 'find storeBox cardid'
+                #         slotlist.append(1)
+                #         break
             elif cardcontent in self.windows.stoveBox:
                 return slotlist
         logging.info(slotlist)
@@ -702,7 +758,7 @@ class MyCollectCard(threading.Thread):
         print u'检查卡箱是否存在该卡片',cardId
         logging.info(u'检查卡箱是否存在该卡片'+str(cardId))
         print  u'交换箱',self.windows.exchangeBox,u'保险箱',self.windows.storeBox
-        if cardId in self.windows.exchangeBox or cardId in self.windows.storeBox  :
+        if int(cardId) in self.windows.exchangeBox or cardId in self.windows.storeBox  :
             return True
         elif cardId in self.windows.stoveBox:
             if cardId in self.cardInSloveList and self.cardInSloveList.count(cardId)==self.windows.stoveBox.count(cardId):

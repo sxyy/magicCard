@@ -129,3 +129,4 @@ def getBKN(skey):
         myhash += (myhash<<5)+ord(i)
     return myhash & 0x7fffffff
 
+

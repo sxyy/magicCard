@@ -13,13 +13,15 @@ class CardDataBase(object):
         
        
         if not os.path.exists(path+constant.DATABASE):
-            self.cx = sqlite3.connect(path+constant.DATABASE,check_same_thread = False)
+            #path+
+            print path
+            self.cx = sqlite3.connect(constant.DATABASE,check_same_thread = False)
             self.cu= self.cx.cursor()
             self.cu.execute("create table cardinfo (id integer primary key,pid integer,themeid integer,name text NULL,price integer)")
             self.cu.execute("create table cardtheme (id integer primary key,pid integer,name text NULL,diff integer,type integer,gift text NULL,flashtheme integer)")
             self.cu.execute("create table cardrelation(id integer primary key,themeid integer,pid integer,content1 integer,content2 integer,content3 integer,time integer)")
             self.cu.execute("create table gift(id integer primary key,pid integer,showId integer,name text NULL)")
-            f=file(path+"card_info_v3.db")
+            f=file("card_info_v3.db")
             self.soup3 = BeautifulSoup(f.read(),fromEncoding="gbk")
             cardlist = self.soup3.find_all('card')
             for item in cardlist:
@@ -40,7 +42,7 @@ class CardDataBase(object):
                 self.cu.execute("insert into gift(id,pid,showId,name)  values (NULL,'"+str(soup.gift['id'])+"','"+str(soup.gift['showid'])+"','"+soup.gift['name']+"')")
             self.cx.commit()
         else:
-            self.cx = sqlite3.connect(path+constant.DATABASE,check_same_thread = False)
+            self.cx = sqlite3.connect(constant.DATABASE,check_same_thread = False)
             self.cu= self.cx.cursor()
         print 'ok'
         
@@ -61,6 +63,10 @@ class CardDataBase(object):
         cardInfo.append(str(result[1]))
         return cardInfo
 
+    def getCardInfo2(self,cardId):
+        self.cu.execute("select name,price,themeid from cardinfo where pid=?",(cardId,))
+        result = self.cu.fetchone()
+        return result
     '''获取卡片的主题名字
     '''
 
@@ -68,6 +74,7 @@ class CardDataBase(object):
         self.cu.execute("SELECT name FROM cardtheme WHERE pid=?", (int(themeId),))
         result = self.cu.fetchone()
         return result[0]
+
     #返回卡的主题id值
     def getCardThemeid(self,cardId):
         self.cu.execute("select themeid from cardinfo where pid=?",(int(cardId),))

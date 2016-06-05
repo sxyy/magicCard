@@ -39,7 +39,9 @@ class FlashCardThread(threading.Thread):
             if self.mid_theme_id==-1:
                 self.transfer_card(self.des_theme_id,self.src_theme_id,self.des_price,self.src_price,False)
             else:
+                print u'变卡初始',self.mid_theme_id,self.src_theme_id,self.mid_price,self.src_price
                 self.transfer_card(self.mid_theme_id,self.src_theme_id,self.mid_price,self.src_price,False)
+                print u'变卡中期',self.des_theme_id,self.mid_theme_id,self.des_price,self.mid_price
                 self.transfer_card(self.des_theme_id,self.mid_theme_id,self.des_price,self.mid_price,True)
         except:
             s = traceback.format_exc()
@@ -98,7 +100,7 @@ class FlashCardThread(threading.Thread):
             slotid = -1
             for i,exchang_card_id in enumerate(self.exchange_box):
                 if exchang_card_id!=0:
-                    print exchang_card_id,self.window.database.getCardThemeid(exchang_card_id),self.window.database.getCardInfo(exchang_card_id)[2]
+                    # print exchang_card_id,self.window.database.getCardThemeid(exchang_card_id),self.window.database.getCardInfo(exchang_card_id)[2]
                     if int(self.window.database.getCardThemeid(exchang_card_id))==int(src_card_theme) and int(self.window.database.getCardInfo(exchang_card_id)[2])==int(src_price) :
                         slottype = 0
                         src_card_id = exchang_card_id
@@ -108,7 +110,8 @@ class FlashCardThread(threading.Thread):
             if slotid ==-1:
                 for i,store_card_id in enumerate(self.store_box):
                     if store_card_id!=0:
-                        print store_card_id,self.window.database.getCardThemeid(store_card_id),self.window.database.getCardInfo(store_card_id)[2]
+
+                        # print store_card_id,src_card_theme,self.window.database.getCardThemeid(store_card_id),self.window.database.getCardInfo(store_card_id)[2],src_price
                         if int(self.window.database.getCardThemeid(store_card_id))==int(src_card_theme) and int(self.window.database.getCardInfo(store_card_id)[2])==int(src_price) :
                             slottype = 1
                             src_card_id = store_card_id
@@ -125,7 +128,9 @@ class FlashCardThread(threading.Thread):
                 flash_card_str = u''
                 kind = 0
                 types = 2
+
             des_card_id = self.get_random_flash_card_id(des_card_theme,des_price)
+            # print des_card_id,slottype,kind,src_card_id,slotid,types
             post_data = {
                 'dstid':des_card_id,
                 'slottype':slottype,

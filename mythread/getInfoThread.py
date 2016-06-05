@@ -45,9 +45,10 @@ class GetInfoThread(threading.Thread):
         x = time.localtime(endtime)
         self.timelist.insert(-1, time.strftime('%Y-%m-%d %H:%M:%S',x))
         if int(soup.card['flag'])==2:
-            self.cardcomplete[-2] = 1
+            self.windows.friend_complete[StealFriend] = 1
         else:
-            self.cardcomplete[-2] = 0
+            self.windows.friend_complete[StealFriend] = 0
+        self.windows.friend_slove[StealFriend] = len(self.cardcomplete)
         print u'插入后的卡炉信息',self.windows.stoveBox
 
 
@@ -67,6 +68,7 @@ class GetInfoThread(threading.Thread):
         self.timelist = []
         self.cardcomplete = []
         self.userInfo = []
+        self.end_time_list = []
 
         if self.flag==constant.EXCHANGEBOX:
             self.childlist = self.soup.changebox.children
@@ -83,14 +85,17 @@ class GetInfoThread(threading.Thread):
             constant.STOREBOXNUM = int(self.soup.storebox['cur'])
             self.windows.storeBox = [0]*constant.STOREBOXNUM
         elif self.flag==constant.STOVEBOX:
+            self.windows.friend_complete = {}
+            self.windows.friend_slove = {}
             if constant.ISRED==0:
                 constant.SLOVENUM = int(self.soup.stovebox['cur'])-1
-                self.windows.stealFriend = [0]
+                self.cardcomplete = [0] * (constant.SLOVENUM-1)
+
             else:
                 constant.SLOVENUM = int(self.soup.stovebox['cur'])
-                self.windows.stealFriend = [0, 0]
+                self.cardcomplete = [0] * (constant.SLOVENUM-2)
             self.windows.stoveBox = [0]*constant.SLOVENUM
-            self.cardcomplete = [0] * constant.SLOVENUM
+
             self.childlist = self.soup.stovebox.children
         elif self.flag==constant.ZCG:
             self.windows.zcgInfoDic = []
@@ -101,8 +106,11 @@ class GetInfoThread(threading.Thread):
             for i,zcgInfo in enumerate(zcgInfos):
                 try:
                     endpuzi =  int(zcgInfo['end'])
+                    x = time.localtime(endpuzi)
+                    self.end_time_list.append(time.strftime('%Y-%m-%d %H:%M:%S',x) )
                 except KeyError:
                     endpuzi = 9436421308
+                    self.end_time_list.append("---")
                 if int(time.time())<= endpuzi:
                     if zcgInfo['card_id']!=0:
                         endtime = int(zcgInfo['begin'])+int(zcgInfo['smelt_time'])
@@ -117,7 +125,6 @@ class GetInfoThread(threading.Thread):
                     self.windows.zcgInfoDic.append(zcgInfo['id'])
 
             print u'空珍藏阁信息',self.windows.zcgInfoDic
-            print
         if self.flag!=constant.ZCG:
             for item in self.childlist:
                 if item != u'\n':
@@ -135,48 +142,108 @@ class GetInfoThread(threading.Thread):
                     elif self.flag==constant.STOVEBOX:
 
                         if pid!=0:
+                            if int(soup2.card['slot'])!=6:
+                                self.windows.stoveBox[int(soup2.card['slot'])] = pid
+                                if int(soup2.card['flag']) == 2:
+                                    self.cardcomplete[int(soup2.card['slot'])] = 1
+                                else:
+                                    self.cardcomplete[int(soup2.card['slot'])] = 0
+                            else:
+                                self.windows.stoveBox[-1] = int(pid)
+                                if constant.ISRED==1:
+                                    self.windows.friend_slove[str(soup2.card['opuin'])] = len(self.cardcomplete)+1
+
+                                else:
+                                    self.windows.friend_slove[str(soup2.card['opuin'])] = len(self.cardcomplete)
+                                if int(soup2.card['flag']) == 2:
+                                    self.windows.friend_complete[str(soup2.card['opuin'])] =1
+                                else:
+                                    self.windows.friend_complete[str(soup2.card['opuin'])] =0
                             endtime = int(soup2.card['btime'])+int(soup2.card['locktime'])
                             x = time.localtime(endtime)
-                            self.timelist.append(time.strftime('%Y-%m-%d %H:%M:%S',x) )
+                            self.timelist.append(time.strftime('%Y-%m-%d %H:%M:%S',x))
                         else:
-                            self.timelist.append('')
-                        if int(soup2.card['slot'])!=6:
-                            '''卡片的完成情况
-                            '''
-                            self.windows.stoveBox[int(soup2.card['slot'])] = pid
-                            if int(soup2.card['flag']) == 2:
-                                self.cardcomplete[int(soup2.card['slot'])] = 1
-                            else:
+                            if int(soup2.card['slot'])!=6:
                                 self.cardcomplete[int(soup2.card['slot'])] = 0
-                        else:
-
-                            if int(soup2.card['flag']) == 2:
-                                self.cardcomplete[-1] = 1
                             else:
-                                self.cardcomplete[-1] = 0
+                                if int(soup2.card['opuin2'])==0:
+                                    self.windows.friend_complete[str(constant.STEALFRIEND)] = -1
+                                    if constant.ISRED==1:
+                                        self.windows.friend_slove[str(constant.STEALFRIEND)] = len(self.cardcomplete)+1
+                                    else:
+                                        self.windows.friend_slove[str(constant.STEALFRIEND)] = len(self.cardcomplete)
+                                else:
+                                    if str(soup2.card['opuin2'])==str(constant.STEALFRIEND):
+                                        self.windows.friend_complete[str(constant.STEALFRIEND2)] = -1
+                                        if constant.ISRED==1:
+                                            self.windows.friend_slove[str(constant.STEALFRIEND2)] = len(self.cardcomplete)+1
+                                        else:
+                                            self.windows.friend_slove[str(constant.STEALFRIEND2)] = len(self.cardcomplete)
+                                    else:
+                                        self.windows.friend_complete[str(constant.STEALFRIEND)] = -1
+                                        if constant.ISRED==1:
+                                            self.windows.friend_slove[str(constant.STEALFRIEND)] = len(self.cardcomplete)+1
+                                        else:
+                                            self.windows.friend_slove[str(constant.STEALFRIEND)] = len(self.cardcomplete)
+                                # self.windows.friend_complete[str(soup2.card['opuin'])] = -1
 
-                            if pid!=0:
-                                self.windows.stealFriend[-1] = int(soup2.card['opuin'])
+                                self.windows.stoveBox[-1] = int(pid)
+                            self.timelist.append('')
+
+
+
+                        if constant.ISRED==1 and int(soup2.card['slot'])==6 and int(soup2.card['opuin2'])!=0:
+                            self.getSlove2Info(str(soup2.card['opuin2']))
+                        elif constant.ISRED==1 and int(soup2.card['slot'])==6:
+                            self.windows.stoveBox[-2] = 0
+                            self.timelist.insert(-1, "")
+                            if self.windows.friend_complete.has_key(str(constant.STEALFRIEND)):
+                                self.windows.friend_complete[str(constant.STEALFRIEND2)] = -1
                             else:
-                                self.windows.stealFriend[-1] = 0
-                            self.windows.stoveBox[-1] = int(pid)
-                            if constant.ISRED==1 and int(soup2.card['opuin2'])!=0:
-                                self.windows.stealFriend[-2] = int(soup2.card['opuin2'])
-                                self.getSlove2Info(int(soup2.card['opuin2']))
-                            elif constant.ISRED==1:
-                                self.windows.stoveBox[-2] = 0
-                                self.timelist.insert(-1, "")
-                                self.cardcomplete[-2] = 0
-                                self.windows.stealFriend[-2] = 0
+                                self.windows.friend_complete[str(constant.STEALFRIEND)] = -1
+                        # if int(soup2.card['slot'])!=6:
+                        #     '''卡片的完成情况
+                        #     '''
+                        #     self.windows.stoveBox[int(soup2.card['slot'])] = pid
+                        #     if int(soup2.card['flag']) == 2:
+                        #         self.cardcomplete[int(soup2.card['slot'])] = 1
+                        #
+                        # else:
+                        #
+                        #     if int(soup2.card['flag']) == 2:
+                        #         # self.cardcomplete[-1] = 1
+                        #         self.complete = 1
+                        #     else:
+                        #         # self.cardcomplete[-1] = 0
+                        #         self.complete = 0
+                        #     if constant.ISRED==1:
+                        #         self.windows.friend_slove =
+                        #     if pid!=0:
+                        #         self.windows.friend_complete[str(soup2.card['opuin'])] = self.complete
+                        #
+                        #
+                        #
+                        #     if constant.ISRED==1 and int(soup2.card['opuin2'])!=0:
+                        #         self.windows.stealFriend[-2] = str(soup2.card['opuin2'])
+                        #         self.getSlove2Info(str(soup2.card['opuin2']))
+                        #     elif constant.ISRED==1:
+                        #         self.windows.stoveBox[-2] = 0
+                        #         self.timelist.insert(-1, "")
+                        #         self.cardcomplete[-2] = 0
+                        #         self.windows.stealFriend[-2] = ''
 
 #                             
         
-        wx.CallAfter(self.windows.updateInfo,self.flag,self.timelist,self.userInfo)
+        wx.CallAfter(self.windows.updateInfo,self.flag,self.timelist,self.userInfo,self.end_time_list)
         if constant.RUNSTATE:
             if ((1 in self.cardcomplete) or (0 in self.windows.stoveBox) or (constant.RANDCHANCE >= 10) or (
-                -1 in self.windows.czgComplete) or (
-                1 in self.windows.czgComplete)) and constant.COLLECTTHEMEID != -1 and (self.flag == constant.STOVEBOX):
-                print u'偷炉信息', self.windows.stealFriend
+                -1 in self.windows.czgComplete) or (1 in self.windows.czgComplete) or (1 in self.windows.friend_complete.values())) and constant.COLLECTTHEMEID != -1 and (self.flag == constant.STOVEBOX):
+                # print self.cardcomplete
+                # print self.windows.stoveBox
+                # print constant.RANDCHANCE
+                # print self.windows.czgComplete
+                # print u'偷炉信息', self.windows.friend_complete
+                print u'信息xxxxxxxxx',self.flag
                 time.sleep(10)
                 collectCardThread = collectcard.MyCollectCard(self.windows, self.cardcomplete)
                 collectCardThread.start()

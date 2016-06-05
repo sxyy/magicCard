@@ -2,11 +2,11 @@
 __author__ = 'Administrator'
 import wx
 from commonlib import constant
-import logging,ConfigParser
-from mythread import searchCardThread,flashCardThread,commitThread,flashCardToFlashCard
+import logging
+from mythread import searchCardThread,flashCardThread,commitThread,flashCardToFlashCard,exchangCardThread
 import datetime,xlwt
 import wx.lib.hyperlink as hyperlink
-
+import main
 
 class SearchCard(wx.Panel):
 
@@ -31,14 +31,16 @@ class SearchCard(wx.Panel):
         self.flash_card_name_list = []
         self.flash_card_theme_id_list = []
         self.flash_normal_theme_id_list = []
-        self.src_price = 44
+        self.src_price = 48
         self.des_price = 120
         self.middle_price = 40
         #提交卡组
         self.commit_index = -1
+
+        self.operate_list = [u'搜卡',u'换卡']
+
         #---------------超链接-----------
         self.cardFriendLinkSizer = wx.BoxSizer(wx.HORIZONTAL)
-
         self.userIdChoice = wx.ComboBox(self,-1,pos=wx.DefaultPosition,size=wx.DefaultSize,choices=[],style=wx.CB_DROPDOWN)
         self.userIdChoice.Bind(wx.EVT_CHOICE,self.onCardUserChoice)
         self.hyper = hyperlink.HyperLinkCtrl(self,-1,u"卡友链接")
@@ -92,7 +94,9 @@ class SearchCard(wx.Panel):
         self.detailCardLabel = wx.StaticText(self,-1,u'卡片')
         self.detailCardChoice = wx.Choice(self,-1,(50,400),wx.DefaultSize,[])
         self.detailCardChoice.Enable(False)
-        self.searchBt = wx.Button(self,-1,u'搜索')
+        self.operateChoice = wx.Choice(self,-1,(50,400),wx.DefaultSize,self.operate_list)
+        self.operateChoice.SetSelection(0)
+        self.searchBt = wx.Button(self,-1,u'开始')
         self.searchStop = wx.Button(self,-1,u'停止')
         self.searchBt.Bind(wx.EVT_BUTTON, self.searchTheme)
         self.searchStop.Bind(wx.EVT_BUTTON, self.stopSearchTheme)
@@ -102,6 +106,7 @@ class SearchCard(wx.Panel):
         self.sloveOperateSizer.Add(self.searchCardPriceChoice,0,wx.ALL,5)
         self.sloveOperateSizer.Add(self.detailCardLabel,0,wx.ALL,5)
         self.sloveOperateSizer.Add(self.detailCardChoice,0,wx.ALL,5)
+        self.sloveOperateSizer.Add(self.operateChoice,0,wx.ALL,5)
         self.sloveOperateSizer.Add(self.searchBt,0,wx.ALL,5)
         self.sloveOperateSizer.Add(self.searchStop,0,wx.ALL,5)
 
@@ -109,7 +114,7 @@ class SearchCard(wx.Panel):
         self.sloveOperateSizer2.Add(self.sloveOperateSizer,0,wx.ALL,5)
         self.sloveOperateSizer2.Add(self.other_operate,0,wx.ALL,5)
         #-------------变卡操作----------
-        self.flash_type = [u'44面值闪120',u'44面值变普卡40',u'闪120变闪240',u'闪120变闪360',u'普480闪1440']
+        self.flash_type = [u'48面值闪120',u'48面值变普卡40',u'闪120变闪240',u'闪120变闪360',u'普480闪1440']
         self.flash_card_num = [u'5',u'10',u'15',u'20',u'30',u'40']
         self.flash_card_theme = [u'']
         sb2  = wx.StaticBox(self,label = u'变卡')
@@ -165,6 +170,8 @@ class SearchCard(wx.Panel):
         self.Show(True)
 
 
+
+
     def on_check(self,e):
         '''
         当复选框选择时
@@ -183,7 +190,7 @@ class SearchCard(wx.Panel):
         :return:
         '''
 
-        commit_thread = commitThread.CommitThread(self,self.myHttpRequest,int(self.themeIdList[self.commit_index]))
+        commit_thread = commitThread.CommitThread(self,main.RefinedCard.main_http_request,int(self.themeIdList[self.commit_index]))
         commit_thread.start()
 
     def on_commit_theme_select(self,e):
@@ -229,7 +236,7 @@ class SearchCard(wx.Panel):
         self.flash_card_num_choice.Enable(True)
         if type==0:
             flash_theme_list = self.database.get_flash_card_list()
-            self.src_price = 44
+            self.src_price = 48
             self.middle_price = 40
             self.des_price = 120
             for flash_card in flash_theme_list:
@@ -238,7 +245,7 @@ class SearchCard(wx.Panel):
                 self.flash_card_theme_id_list.append(flash_card[0])
                 self.flash_normal_theme_id_list.append(flash_card[2])
         elif type==1:
-            self.src_price = 44
+            self.src_price = 48
             self.middle_price =-1
             self.des_price = 40
             flash_theme_list = self.database.get_grounding_card_list()
@@ -267,7 +274,7 @@ class SearchCard(wx.Panel):
 
     def on_card_flash(self,e):
         '''
-        变卡
+        变卡 修改礼物卡 修改srcprice，以及下面的主题
         :param e:
         :return:
         '''
@@ -282,16 +289,16 @@ class SearchCard(wx.Panel):
             retCode = dlgs.ShowModal()
             if retCode == wx.ID_YES:
                 print middle_theme_id,des_theme_id,self.src_price,self.des_price
-                card_theme_list = [422,middle_theme_id,des_theme_id]
+                card_theme_list = [487,middle_theme_id,des_theme_id]
                 card_price_list = [self.src_price,self.middle_price,self.des_price]
-                flash_card_thread = flashCardThread.FlashCardThread(self,self.myHttpRequest,card_theme_list,
+                flash_card_thread = flashCardThread.FlashCardThread(self,main.RefinedCard.main_http_request,card_theme_list,
                                                                     int(self.flash_card_num_choice.GetStringSelection()),card_price_list)
                 flash_card_thread.start()
         elif  self.flash_type_choice.GetSelection()>=2:
             if self.flash_type_choice.GetSelection()== 4:
-                flash_card_thread = flashCardToFlashCard.FlashCardToFlashCardThread(self,self.myHttpRequest,self.src_price,self.des_price,1)
+                flash_card_thread = flashCardToFlashCard.FlashCardToFlashCardThread(self,main.RefinedCard.main_http_request,self.src_price,self.des_price,1)
             else:
-                flash_card_thread = flashCardToFlashCard.FlashCardToFlashCardThread(self,self.myHttpRequest,self.src_price,self.des_price)
+                flash_card_thread = flashCardToFlashCard.FlashCardToFlashCardThread(self,main.RefinedCard.main_http_request,self.src_price,self.des_price)
             flash_card_thread.start()
             pass
         else:
@@ -468,11 +475,28 @@ class SearchCard(wx.Panel):
             search_range_theme_id = self.themeIdList[self.search_index]
         else:
             search_range_theme_id = -1
-        self.searchThread = searchCardThread.SearchCardThread(self,self.myHttpRequest,
-                                                         int(self.themeIdList[self.seachThemeIndex]),
-                                                              self.searchCardPriceChoice.GetStringSelection(),
-                                                              cardDetail,search_range_theme_id,self.is_show_flash_card.GetValue())
-        self.searchThread.start()
+        if self.operateChoice.GetSelection()==0:
+            self.searchThread = searchCardThread.SearchCardThread(self,main.RefinedCard.main_http_request,
+                                                             int(self.themeIdList[self.seachThemeIndex]),
+                                                                  self.searchCardPriceChoice.GetStringSelection(),
+                                                                  cardDetail,search_range_theme_id,self.is_show_flash_card.GetValue())
+
+            #创建excel
+            self.wb = xlwt.Workbook()
+            self.seachCardFriendNum = 0
+            self.ws = self.wb.add_sheet(u'卡友信息')
+            self.ws.write(0,0,u'QQ号')
+            self.ws.write(0,1,u'卡片信息')
+            self.ws.write(0,2,u'需交换的卡组')
+            self.searchThread.start()
+        else:
+            self.exchangeThread = exchangCardThread.ExchangeCardThread(self,main.RefinedCard.main_http_request,
+                                                                       int(self.themeIdList[self.seachThemeIndex]),
+                                                                       self.searchCardPriceChoice.GetStringSelection(),
+                                                                       cardDetail)
+            self.exchangeThread.start()
+            pass
+
         self.searchStop.Enable(True)
         self.searchBt.Enable(False)
         self.collectThemeChoice.Enable(False)
@@ -483,19 +507,16 @@ class SearchCard(wx.Panel):
         self.seachTime = datetime.datetime.strftime(datetime.datetime.now(), '%Y_%m_%d_%H_%M_%S')
         self.userIdChoice.SetItems([])
 
-        #创建excel
-        self.wb = xlwt.Workbook()
-        self.seachCardFriendNum = 0
-        self.ws = self.wb.add_sheet(u'卡友信息')
-        self.ws.write(0,0,u'QQ号')
-        self.ws.write(0,1,u'卡片信息')
-        self.ws.write(0,2,u'需交换的卡组')
+
         e.Skip()
 
     '''停止搜索
     '''
     def stopSearchTheme(self,e):
-        self.searchThread.stop()
+        if self.operateChoice.GetSelection()==0 :
+            self.searchThread.stop()
+        else:
+            self.exchangeThread.stop()
         self.searchStop.Enable(False)
         self.searchBt.Enable(True)
         self.collectThemeChoice.Enable(True)

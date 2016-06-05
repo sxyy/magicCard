@@ -10,7 +10,7 @@ import constant,logging
 import socket
 import struct
 import time
-import win32api
+import win32api,json
 
 from bs4 import BeautifulSoup
 
@@ -24,13 +24,15 @@ def getRandomNum(num):
     return strNum
 
 #获取对应的url
-def getUrl(url,myHttpRequest):
+def getUrl(url,myHttpRequest,account = None):
     skey = ''
     for ck in myHttpRequest.cj:
             if ck.name=='skey':
                 skey = ck.value
     base_url = url
     base_url = base_url.replace('GTK', str(Tea.getGTK(skey)))
+    if account is not None:
+        base_url = base_url.replace('QQ',account)
     return base_url
 
 def drawCard(myhttpRequest,types,fetchnum):
@@ -141,6 +143,7 @@ def registerMagic(myhttpRequest):
     base_url = getUrl(constant.REGISTERMAGICCARD,myhttpRequest)
     page_content = myhttpRequest.get_response(base_url).read().decode('utf-8')
     logging.info(page_content)
+
 #获取魔卡信息
 def getMagicInfo(myhttpRequest,account):
     skey = ''
@@ -156,6 +159,23 @@ def getMagicInfo(myhttpRequest,account):
     base_url = base_url.replace('GTK', str(Tea.getGTK(skey)))
     page_content = myhttpRequest.get_response(base_url,postData).read().decode('utf-8')
     return   page_content
+
+
+#获取魔卡信息
+def getMagicInfo2(myhttpRequest,account):
+    skey = ''
+    for ck in myhttpRequest.cj:
+            if ck.name=='skey':
+                skey = ck.value
+    postData = {
+           'uin':constant.USERNAME,
+           'opuin':account,
+    }
+    base_url = constant.CARDLOGINURL
+    base_url = base_url.replace('GTK', str(Tea.getGTK(skey)))
+    page_content = myhttpRequest.get_response(base_url,postData).read().decode('utf-8')
+    return   page_content
+
 
 
 def getStoveBoxInfo(page_content):
@@ -208,7 +228,10 @@ def get_type_info(flag,magicCardInfo):
     exchange_box = []
     soup = BeautifulSoup(magicCardInfo)
     if flag==constant.EXCHANGEBOX:
-        childlist = soup.changebox.children
+        try:
+            childlist = soup.changebox.children
+        except:
+            print magicCardInfo
         constant.EXCHANGEBOXNUM = int(soup.changebox['cur'])
         exchange_box = [0]*constant.EXCHANGEBOXNUM
     elif flag==constant.STOREBOX:
@@ -288,8 +311,32 @@ def getPrizeInfo(page_content):
                 result+= u'3天经验卡'+'*'+list_item[2]
             elif list_item[1]=='18':
                 result+= u'7天经验卡'+'*'+list_item[2]
+            elif list_item[1]=='16':
+                result+= u'加速卡'+'*'+list_item[2]
             else:
                 result+= u'未知',list_item
         result+=','
     return result
+
+def getPetExplorePrize(page_content):
+    result = ''
+    prizes_json =  json.loads(page_content)['send']
+    for prize_dict in prizes_json:
+        result += constant.GIFTDICT[str(prize_dict['type'])] + ','
+    return result
+
+
+def getCardPrize(database,page_content):
+    '''
+    获取卡片的奖励
+    :param database:
+    :param page_content:
+    :return:
+    '''
+    result = ''
+    card_list =  re.findall('(\d+)_(.*?)_(\d+)',page_content,re.S)
+    for list_item in card_list:
+        result = database.getCardInfo(int(list_item[1]))[0]+','
+    return result
+
 

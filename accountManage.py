@@ -10,7 +10,7 @@ from bs4 import  BeautifulSoup
 import commonlib.Tea as Tea
 import threading
 import urllib
-import random
+import random,datetime,os,ConfigParser
 
 
 
@@ -23,7 +23,7 @@ class TestListCtrl(wx.ListCtrl, listmix.CheckListCtrlMixin, listmix.ListCtrlAuto
         self.selectItem = -1
         self.account_select = []
         self.windows = self.GetParent()
-        self.menu_title_by_id = {1:u'查看卡箱信息',2:u'锁交换箱',3:u'解锁交换箱'}
+        self.menu_title_by_id = {1:u'查看卡箱信息', 2:u'锁交换箱', 3:u'解锁交换箱', 4:u'秒卡'}
         self.Bind(wx.EVT_LIST_ITEM_RIGHT_CLICK,self.onItemRightClick)
 
     def onItemRightClick(self,e):
@@ -39,7 +39,6 @@ class TestListCtrl(wx.ListCtrl, listmix.CheckListCtrlMixin, listmix.ListCtrlAuto
             print event.GetId()
 
             if 1==event.GetId():
-
                 postData = {
                                    'code':'',
                                    'uin':self.selectAccount
@@ -51,10 +50,57 @@ class TestListCtrl(wx.ListCtrl, listmix.CheckListCtrlMixin, listmix.ListCtrlAuto
                     base_url =  self.getUrl(constant.CARDLOGINURL)
                     page_content = self.myHttpRequest.get_response(base_url,postData)
                     self.magicCardInfo= page_content.read()
-                       #print self.magicCardInfo
                     self.getBoxInfo()
                 except KeyError:
                     self.windows.operateLogUpdate(u'获取卡箱信息失败,请检查该账号是否登录')
+            elif 4 == event.GetId():
+                if os.path.exists("1.ini"):
+                    constant.MAGICCARDID = self.windows.config.get(u'这个是秒卡的配置项不要选他运行哦'.encode('gbk'), 'magicCardId')
+                    # 这里是进行秒卡的操作
+                    base_url = constant.MOBILESTEALCARD
+                    base_url = base_url.replace('SID','')
+                    print self.windows.database.getCardThemeid(str(constant.MAGICCARDID))
+                    base_url =base_url.replace('TID',str(self.windows.database.getCardThemeid(str(constant.MAGICCARDID))))
+                    base_url =base_url.replace('FRENDID',self.selectAccount)
+                    base_url =base_url.replace('CARDID',str(constant.MAGICCARDID))
+                    print base_url
+                    page_content = self.windows.mainAccountHttpRequest.get_response(base_url).read().decode('utf-8')
+                    if u'您成功的将卡片放入好友的炼卡' in page_content:
+                        self.windows.operateLogUpdate(u'成功将卡片'+self.windows.database.getCardInfo(str(constant.MAGICCARDID))[0]+u'放入好友卡炉。')
+                        time.sleep(1)
+                        # 放卡成功后，小号要进行秒卡操作
+                        postData = {
+                            'uin':self.selectAccount,
+                            'bottletype':1,
+                            'prop':0,
+                            'slotid':5
+                        }
+                        print postData
+                        self.myHttpRequest = self.windows.account_http_dic[self.selectAccount]
+                        base_url = self.getUrl(constant.MIAOKAURL)
+                        page_content = self.myHttpRequest.get_response(base_url,postData).read()
+                        if 'code="0"' in page_content:
+                            self.windows.operateLogUpdate(u'小号秒卡完毕')
+                            time.sleep(1)
+                            # 大号收卡
+                            postData = {
+                                'uin':constant.USERNAME,
+                                'slottype':1,
+                                'slotid':5,
+                                'code':'',
+                                'opuin':self.selectAccount,
+                                'ver':1
+                            }
+                            base_url = self.getUrl(constant.GETSTEALCARD, self.windows.mainAccountHttpRequest)
+                            page_content =  self.windows.mainAccountHttpRequest.get_response(base_url,postData).read()
+                            if 'code="0"' in page_content:
+                                self.windows.operateLogUpdate(u'大号收卡完成')
+
+                    elif u'系统繁忙' in page_content:
+                        self.windows.operateLogUpdate(u'系统繁忙')
+                else:
+                    self.windows.operateLogUpdate(u'目录下没有1.ini文件,无法秒卡')
+
 
     def getBoxInfo(self):
          infoThread1 = mythread.GetInfoThread(self.magicCardInfo,constant.EXCHANGEBOX,self.windows,self.myHttpRequest)
@@ -65,9 +111,11 @@ class TestListCtrl(wx.ListCtrl, listmix.CheckListCtrlMixin, listmix.ListCtrlAuto
 
 
     #获取对应的url
-    def getUrl(self,url):
+    def getUrl(self,url,httpRequest=None):
         skey = ''
-        for ck in self.myHttpRequest.cj:
+        if httpRequest is None:
+            httpRequest = self.myHttpRequest
+        for ck in httpRequest.cj:
                 if ck.name=='skey':
                     skey = ck.value
         base_url = url
@@ -106,13 +154,16 @@ class AccountManage(wx.Panel):
 
 
     account_http_dic = {}
-    def __init__(self, parent,database):
+    def __init__(self, parent,database,mainAccountHttpRequest):
         wx.Panel.__init__(self, parent=parent)
         self.head_list = [u'序号',u'账号',u'昵称',u'登陆状态']
         self.exchangeBoxlistHead = [u'换',u'卡片',u'卡片类型',u'价格']
         self.safeBoxlistHead = [u'保',u'卡片',u'卡片类型',u'价格']
-        self.operate_list = [u'一键领取登陆礼包',u'一键领取100面值卡片',u'一键送礼物卡',u'一键小号420魔力']
+        self.operate_list  =  [u'一键领取登陆礼包',u'一键领取100面值卡片',u'一键送礼物卡',u'一键小号420魔力',u'一键抽卡',u'一键卖素材卡',u'一键探险最后一关',u'一键秒卡']
         self.myHttpRequest = myhttp.MyHttpRequest()
+        self.mainAccountHttpRequest = mainAccountHttpRequest
+        self.czgComplete = []
+        self.friend_complete = []
         #当前的选择的账号
 
         self.current_account = 0
@@ -124,6 +175,14 @@ class AccountManage(wx.Panel):
         self.accout_sid_dic = {}
         self.account_dic = {}
         self.database = database
+
+        if os.path.exists("1.ini"):
+            self.config = ConfigParser.ConfigParser()
+            self.config.read('1.ini')
+            self.operate_list.extend(self.config.sections())
+        else:
+            print u'no exist'
+
 
         self.sb = wx.StaticBox(self,label=u'账号管理')
         self.list_sizer = wx.StaticBoxSizer(self.sb,wx.VERTICAL)
@@ -139,6 +198,8 @@ class AccountManage(wx.Panel):
         self.account_send_gift_text.Enable(False)
         self.account_action = wx.Button(self,-1,u'执行')
         self.account_action.Bind(wx.EVT_BUTTON,self.onAction)
+        self.reload_config_file = wx.Button(self,-1,u'重新加载配置文件')
+        self.reload_config_file.Bind(wx.EVT_BUTTON, self.onReloadFile)
         self.codeImage=wx.StaticBitmap(self, -1,  pos=wx.DefaultPosition, size=(150,80))
         self.codeLabel = wx.StaticText(self,-1,u'验证码')#-1的意义为id由系统分配
         self.codeInput = wx.TextCtrl(self,-1)
@@ -153,6 +214,7 @@ class AccountManage(wx.Panel):
         self.button_sizer.Add(self.account_send_gift_label,0,wx.ALL,5)
         self.button_sizer.Add(self.account_send_gift_text,0,wx.ALL,5)
         self.button_sizer.Add(self.account_action,0,wx.ALL,5)
+
         self.button_sizer.Add(self.codeLabel,0,wx.ALL,5)
         self.button_sizer.Add(self.codeInput,0,wx.ALL,5)
         self.button_sizer.Add(self.codeImage,0,wx.ALL,1)
@@ -215,6 +277,7 @@ class AccountManage(wx.Panel):
         self.horizontal.Add(self.vertical1,1,wx.ALL,5)
         self.horizontal.Add(self.vertical2,1,wx.ALL,5)
         self.list_sizer.Add(self.button_sizer,0,wx.ALL,5)
+        self.list_sizer.Add(self.reload_config_file,0,wx.ALL,5)
         self.list_sizer.Add(self.horizontal,0,wx.ALL,5)
         #---------------------------
 
@@ -395,7 +458,7 @@ class AccountManage(wx.Panel):
 
 
     #界面更新
-    def updateInfo(self,flag,timelist=None,userInfo=None):
+    def updateInfo(self,flag,timelist=None,userInfo=None,end_time_list=None):
          if flag==constant.EXCHANGEBOX:
             print u'交换箱id信息',self.exchangeBox
             self.exchangesb.SetLabel(u'交换箱 ('+str(len(self.exchangeBox)-self.exchangeBox.count(0))+'/'+str(len(self.exchangeBox))+')')
@@ -424,6 +487,21 @@ class AccountManage(wx.Panel):
                      self.safeBoxlist.Append(["","","",""])
 
 
+    def onReloadFile(self, e):
+
+        self.operate_list = [u'一键领取登陆礼包',u'一键领取100面值卡片',u'一键送礼物卡',u'一键小号420魔力',u'一键抽卡',u'一键卖素材卡',u'一键探险最后一关',u'一键秒卡']
+        if os.path.exists("1.ini"):
+            self.config = ConfigParser.ConfigParser()
+            self.config.read('1.ini')
+            constant.MAGICCARDID = self.config.get(u'这个是秒卡的配置项不要选他运行哦'.encode('gbk'), 'magicCardId')
+            print constant.MAGICCARDID
+            self.operate_list.extend(self.config.sections())
+            self.account_choice.SetItems(self.operate_list)
+            self.operateLogUpdate(u'重新加载配置成功')
+        else:
+            print u'no exist'
+        e.Skip()
+        pass
 
 
     def onAction(self,e):
@@ -441,31 +519,121 @@ class AccountManage(wx.Panel):
 
             thread.start_new_thread(self.accountGetMana,())
         elif self.account_choice.GetSelection()==4:
-            thread.start_new_thread(self.act_get_score,())
-            pass
+            thread.start_new_thread(self.draw_card,())
         elif self.account_choice.GetSelection()==5:
-            thread.start_new_thread(self.act_egg,())
-        elif self.account_choice.GetSelection()==6:
-            thread.start_new_thread(self.act_exchange_score,(0,))
+            thread.start_new_thread(self.card_sell,())
             pass
+        elif self.account_choice.GetSelection()==6:
+            thread.start_new_thread(self.pet_explore,())
         elif self.account_choice.GetSelection()==7:
-            thread.start_new_thread(self.act_exchange_score,(1,))
-        elif self.account_choice.GetSelection()==8:
-            thread.start_new_thread(self.act_exchange_score,(2,))
-        elif self.account_choice.GetSelection()==9:
-            thread.start_new_thread(self.act_exchange_score,(2,True))
-
-        # elif self.account_choice.GetSelection()==9:
-        #     thread.start_new_thread(self.act_get_score,())
-        # elif self.account_choice.GetSelection()==10:
-        #     thread.start_new_thread(self.act_egg,())
+            thread.start_new_thread(self.magic_complete_card,())
+        # elif self.account_choice.GetSelection()==8:
+        #     thread.start_new_thread(self.reset_tree_length,())
+        else:
+            thread.start_new_thread(self.common_activity,())
         e.Skip()
 
+    # 秒卡功能
+    def magic_complete_card(self):
+        for key in self.account_list:
+            try:
+                value =  self.__class__.account_http_dic[key]
+            except KeyError:
+                continue
+            print u'账号',key
+            # 这里是进行秒卡的操作
+            base_url = constant.MOBILESTEALCARD
+            base_url = base_url.replace('SID','')
+            print self.database.getCardThemeid(str(constant.MAGICCARDID))
+            base_url =base_url.replace('TID',str(self.database.getCardThemeid(str(constant.MAGICCARDID))))
+            base_url =base_url.replace('FRENDID',key)
+            base_url =base_url.replace('CARDID',str(constant.MAGICCARDID))
+            print base_url
+            page_content = self.mainAccountHttpRequest.get_response(base_url).read().decode('utf-8')
+            if u'您成功的将卡片放入好友的炼卡' in page_content:
+                wx.CallAfter(self.operateLogUpdate,str(key)+u'成功将卡片'+self.database.getCardInfo(str(constant.MAGICCARDID))[0]+u'放入好友卡炉。')
+                time.sleep(2)
+                # 放卡成功后，小号要进行秒卡操作
+                postData = {
+                    'uin':key,
+                    'bottletype':1,
+                    'prop':0,
+                    'slotid':5
+                }
+                print postData
+                base_url = self.getUrl(value, constant.MIAOKAURL)
+                page_content = value.get_response(base_url,postData).read()
+                if 'code="0"' in page_content:
+                    wx.CallAfter(self.operateLogUpdate,str(key) + u'小号秒卡完毕')
+                    time.sleep(2)
+                    # 大号收卡
+                    postData = {
+                        'uin':constant.USERNAME,
+                        'slottype':1,
+                        'slotid':5,
+                        'code':'',
+                        'opuin':key,
+                        'ver':1
+                    }
+                    base_url = self.getUrl(self.mainAccountHttpRequest, constant.GETSTEALCARD)
+                    page_content =  self.mainAccountHttpRequest.get_response(base_url,postData).read()
+                    if 'code="0"' in page_content:
+                        wx.CallAfter(self.operateLogUpdate,str(key) + u'大号收卡完成')
+                    else:
+                        wx.CallAfter(self.operateLogUpdate,str(key) + u'大号收卡失败，结束秒卡')
+                else:
+                    wx.CallAfter(self.operateLogUpdate,str(key) + u'小号秒卡失败，结束秒卡')
+                    break
 
-    def get_gq_gift(self,gq_id):
+            elif u'系统繁忙' in page_content:
+                wx.CallAfter(self.operateLogUpdate,str(key) + u'系统繁忙')
+                break
+            else:
+                print page_content
+                wx.CallAfter(self.operateLogUpdate,str(key) + u'出了小意外,请检查卡箱')
+                break
+    def pet_explore(self):
         '''
-        领取国庆累计登录礼包
-        :param gq_id:
+        宠物一键探险最后关卡
+        :return:
+        '''
+        for key in self.account_list:
+            try:
+                value =  self.__class__.account_http_dic[key]
+            except KeyError:
+                continue
+            base_url = commons.getUrl(constant.PETEXPLORE,value)
+            post_data = {
+                'act':1,
+                'opuin':key
+            }
+            content_page = value.get_response(base_url,post_data).read().decode('utf-8')
+            level = int(json.loads(content_page)['section_id'])
+            post_data = {
+                'act':4,
+            }
+            content_page = value.get_response(base_url,post_data).read()
+            if 'sucess' in content_page:
+                wx.CallAfter(self.operateLogUpdate,str(key)+u'收获宝箱完成,获得:'+commons.getPetExplorePrize(content_page))
+            else :
+                wx.CallAfter(self.operateLogUpdate,str(key)+u'收获宝箱失败')
+            post_data = {
+                'act':3,
+                'section_id':level,
+                'ids':1,
+                'pass_id':1,
+            }
+            content_page = value.get_response(base_url,post_data).read()
+            if 'sucess' in content_page:
+                wx.CallAfter(self.operateLogUpdate,str(key)+u'探险最新关卡完成')
+            else :
+                wx.CallAfter(self.operateLogUpdate,str(key)+u'探险最新关卡失败')
+
+
+
+    def act_thanks_giving(self):
+        '''
+        感恩节
         :return:
         '''
         for key in self.account_list:
@@ -475,14 +643,155 @@ class AccountManage(wx.Panel):
                 continue
             base_url = commons.getUrl(constant.GQGETGIFTS,value)
             post_data = {
-                'act':2,
-                'id':gq_id,
+                'act':1
             }
-            page_content = value.get_response(base_url,post_data).read().decode('utf--8')
+            content_page = value.get_response(base_url,post_data).read().decode('utf-8')
+            count = int(json.loads(content_page)['free_bbt'])
+            post_data = {
+                'act':2
+            }
+            if count==0:
+                wx.CallAfter(self.operateLogUpdate,str(key)+u'无免费的美食券')
+                continue
+            for i in range(count):
+                page_content = value.get_response(base_url,post_data).read().decode('utf-8')
+                print page_content
+                if 'sucess' in page_content:
+                    kaohuoji = int(json.loads(page_content)['pf'])
+                    bj = int(json.loads(page_content)['bj'])
+                    sb = int(json.loads(page_content)['sb'])
+
+                    wx.CallAfter(self.operateLogUpdate,str(key)+u'获取的物品为:烤火鸡'+str(kaohuoji)+u'个,南瓜馅饼'+str(sb)+u'个,土豆泥'+str(bj)+u'个')
+                else:
+                    wx.CallAfter(self.operateLogUpdate,str(key)+u'赠送美食券失败')
+                    break
+        wx.CallAfter(self.operateLogUpdate,u'一键任务完成')
+
+    def act_get_thanks_giving_score(self):
+        '''
+        查询美食
+        :return:
+        '''
+        for key in self.account_list:
+            try:
+                value =  self.__class__.account_http_dic[key]
+            except KeyError:
+                continue
+            base_url = commons.getUrl(constant.ACTEGG,value)
+            post_data = {
+                'act':1
+            }
+            content_page = value.get_response(base_url,post_data).read().decode('utf-8')
+            high = int(json.loads(content_page)['dian'])
+            wx.CallAfter(self.operateLogUpdate,str(key)+u'圣诞点数:'+str(high))
+
+    def reset_tree_length(self):
+        '''
+        收获树
+        :return:
+        '''
+        post_data = {
+            'act':3
+        }
+
+        for key in self.account_list:
+            try:
+                value =  self.__class__.account_http_dic[key]
+            except KeyError:
+                continue
+            base_url = commons.getUrl(constant.ACTEGG,value)
+
+            page_content = value.get_response(base_url,post_data).read().decode('utf-8')
+            #print page_content
             if 'sucess' in page_content:
-                wx.CallAfter(self.operateLogUpdate,str(key)+u'领取国庆累计登录礼包成功')
+                wx.CallAfter(self.operateLogUpdate,str(key)+u'收获成功')
             else:
-                wx.CallAfter(self.operateLogUpdate,str(key)+u'领取国庆累计登录礼包失败')
+                wx.CallAfter(self.operateLogUpdate,str(key)+u'收获失败,圣诞树高度不够')
+        wx.CallAfter(self.operateLogUpdate,u'一键任务完成')
+
+        pass
+
+
+        pass
+
+
+    def knock_egg(self,m_id):
+        '''
+        挖宝
+        :return:
+        '''
+        post_data = {
+            'act':1
+        }
+        post_data2 = {
+            'act':2,
+            'id':m_id
+        }
+
+        for key in self.account_list:
+            try:
+                value =  self.__class__.account_http_dic[key]
+            except KeyError:
+                continue
+            base_url = commons.getUrl(constant.ACTEGG,value)
+
+            page_content = value.get_response(base_url,post_data).read().decode('utf-8')
+            print page_content
+            count = json.loads(page_content)['free_cnt_10']
+            if count==0:
+                wx.CallAfter(self.operateLogUpdate,str(key)+u'无免费营养液')
+            for i in range(count):
+                page_content = value.get_response(base_url,post_data2).read().decode('utf-8')
+                if 'sucess' in page_content:
+                    result = commons.getPrizeInfo(page_content)
+                    wx.CallAfter(self.operateLogUpdate,str(key)+u'营养液结果为:'+result)
+                else:
+                    wx.CallAfter(self.operateLogUpdate,str(key)+u'收获失败,请检查卡箱')
+        wx.CallAfter(self.operateLogUpdate,u'一键任务完成')
+
+        pass
+
+
+    def card_sell(self):
+        '''
+        一键售卡
+        :return:
+        '''
+        for key in self.account_list:
+            try:
+                value =  self.__class__.account_http_dic[key]
+            except KeyError:
+                continue
+            magic_info = commons.getMagicInfo(value,key)
+            exchange_box = commons.get_type_info(constant.EXCHANGEBOX,magic_info)
+
+            for i,card_id in enumerate(exchange_box):
+                if card_id == 0:
+                    continue
+                if self.database.getCardInfo(card_id)[2]== '10':
+                    commons.sellCard(value,key,i,card_id,0)
+            wx.CallAfter(self.operateLogUpdate,str(key)+u'售卡完成')
+
+        wx.CallAfter(self.operateLogUpdate,u'一键任务完成')
+
+
+
+    def draw_card(self):
+        '''
+        一键抽卡
+        :return:
+        '''
+        for key in self.account_list:
+            try:
+                value =  self.__class__.account_http_dic[key]
+            except KeyError:
+                continue
+            base_url = commons.getUrl(constant.DRAWCARDURL,value)
+            post_data = {
+                'type':2
+            }
+            value.get_response(base_url,post_data)
+            wx.CallAfter(self.operateLogUpdate,str(key)+u'完成一键抽卡')
         wx.CallAfter(self.operateLogUpdate,u'一键任务完成')
 
     def account_commission(self):
@@ -718,7 +1027,7 @@ class AccountManage(wx.Panel):
 
 
     def onOperateSelect(self,e):
-        if self.account_choice.GetSelection()==2 or self.account_choice.GetSelection()==6:
+        if self.account_choice.GetSelection()==2 :
             self.account_send_gift_text.Enable(True)
         else:
             self.account_send_gift_text.Enable(False)
@@ -735,19 +1044,18 @@ class AccountManage(wx.Panel):
                 value =  self.__class__.account_http_dic[account]
             except KeyError:
                 continue
-            base_url =  commons.getUrl(constant.ACTEGG,value)
+            base_url =  commons.getUrl(constant.GQGETGIFTS,value)
             post_data = {
-                'act':6,
+                'act':3,
                 'id':m_id
             }
             page_content = value.get_response(base_url,post_data).read().decode('utf-8')
             if 'sucess' in page_content:
-
                 wx.CallAfter(self.operateLogUpdate,str(account)+u'兑换成功')
                 if m_id==2 and is_complete:
                     base_url =constant.COMMITCARD
                     base_url = base_url.replace('SID', urllib.quote(self.accout_sid_dic[account]))
-                    base_url = base_url.replace('THEMEID',str(428))
+                    base_url = base_url.replace('THEMEID',str(420))
                     page_content = value.get_response(base_url)
                     result_content = page_content.read().decode('utf-8')
                     print result_content
@@ -805,29 +1113,9 @@ class AccountManage(wx.Panel):
         wx.CallAfter(self.operateLogUpdate,u'一键任务完成')
 
 
-    def act_get_score(self):
-        '''
-        查看茱萸个数
-        :return:
-        '''
-
-        for key in self.account_list:
-            try:
-                value =  self.__class__.account_http_dic[key]
-            except KeyError:
-                continue
-            base_url = commons.getUrl(constant.ACTEGG,value)
-            post_data = {
-                'act':4
-            }
-            content_page = value.get_response(base_url,post_data).read().decode('utf-8')
-            xf_dian = int(json.loads(content_page)['vt26'])
-            wx.CallAfter(self.operateLogUpdate,str(key)+u'茱萸个数：'+str(xf_dian))
-
-        wx.CallAfter(self.operateLogUpdate,u'一键任务完成')
     def act_egg(self):
         '''
-        登高
+        探险
         :return:
         '''
         for key in self.account_list:
@@ -837,27 +1125,83 @@ class AccountManage(wx.Panel):
                 continue
             base_url = commons.getUrl(constant.ACTEGG,value)
             post_data = {
-                'act':4
+                'act':1
             }
             content_page = value.get_response(base_url,post_data).read().decode('utf-8')
             count = int(json.loads(content_page)['free_cnt'])
-            zy_old_count = int(json.loads(content_page)['vt26'])
+            jifen = int(json.loads(content_page)['jf'])
             base_url =  commons.getUrl(constant.ACTEGG,value)
             post_data = {
-                'act':5
+                'act':2
             }
-
+            if count==0:
+                wx.CallAfter(self.operateLogUpdate,str(key)+u'无掷骰子次数')
+                continue
             for i in range(count):
                 page_content = value.get_response(base_url,post_data).read().decode('utf-8')
-                logging.info(page_content)
                 if 'sucess' in page_content:
-                    zy_count = int(json.loads(page_content)['vt26'])
-                    wx.CallAfter(self.operateLogUpdate,str(key)+u'获得茱萸：'+str(zy_count-zy_old_count))
-                    zy_old_count = zy_count
+                    jifen2 = int(json.loads(content_page)['jf'])
+                    if jifen != jifen2:
+                        wx.CallAfter(self.operateLogUpdate,str(key)+u'获取积分'+str(jifen-jifen2))
+                        jifen = jifen2
+                    else:
+                        wx.CallAfter(self.operateLogUpdate,str(key)+u'获取的物品为'+commons.getPrizeInfo(page_content))
                 else:
-                    wx.CallAfter(self.operateLogUpdate,str(key)+u'今天已经玩过登高了')
+                    wx.CallAfter(self.operateLogUpdate,str(key)+u'掷骰子失败')
                     break
         wx.CallAfter(self.operateLogUpdate,u'一键任务完成')
+
+
+    def common_activity(self):
+        activity_name =  self.account_choice.GetStringSelection().encode('gbk')
+        url =  self.config.get(activity_name,'url')
+        post_data = self.config.get(activity_name,'postdata')
+        repeat_count = int(self.config.getint(activity_name,'repeatTime'))
+        card_prize = self.config.getint(activity_name,'CardIsPrize')
+        magic_prize = self.config.getint(activity_name,'MagicIsPrize')
+        pet_prize = 0
+        try:
+            pet_prize = self.config.getint(activity_name,'PetIsPrize')
+        except:
+            pass
+        print url
+        print post_data
+        url_list = url.split(';')
+        post_list = post_data.split(';')
+        print post_list
+        for key in self.account_list:
+            try:
+                value =  self.__class__.account_http_dic[key]
+            except KeyError:
+                continue
+            # base_url = commons.getUrl(url,value)
+            for i in range(repeat_count):
+                for j,url_info in enumerate(url_list):
+                    url_info = commons.getUrl(url_info,value,key)
+                    if 'QQ' in post_list[j]:
+                        post_content = post_list[j].replace('QQ',key)
+                    else:
+                        post_content = post_list[j]
+                    page_content = value.get_response(url_info,eval(post_content)).read()
+                    print page_content
+                    if 'sucess' in page_content or 'code="0"' in page_content:
+                        if magic_prize==1:
+                            result = commons.getPrizeInfo(page_content)
+                            wx.CallAfter(self.operateLogUpdate,str(key)+u'结果为:'+result)
+                        elif card_prize==1:
+                            result = commons.getCardPrize(self.database,page_content)
+                            wx.CallAfter(self.operateLogUpdate,str(key)+u'结果为:'+result)
+                        elif pet_prize ==1:
+                            result = commons.getPetExplorePrize(page_content)
+                            wx.CallAfter(self.operateLogUpdate,str(key)+u'结果为:'+result)
+                        else:
+                            wx.CallAfter(self.operateLogUpdate,str(key)+u'执行结果成功')
+                    else:
+                        wx.CallAfter(self.operateLogUpdate,str(key)+u'失败')
+        wx.CallAfter(self.operateLogUpdate,u'一键任务完成')
+
+        pass
+
 
     def OnSendGift(self,e):
         thread.start_new_thread(self.send_card_gift,())
@@ -879,7 +1223,7 @@ class AccountManage(wx.Panel):
             post_data = {
                 'appid':365,
                 'friends':self.account_send_gift_text.GetValue(),
-                'freegift_id':random.randint(75,80),
+                'freegift_id':random.randint(81,86),
                 'sfcount':0,
                 'uin':key,
                 'cb':1,
@@ -932,6 +1276,11 @@ class AccountManage(wx.Panel):
         self.operateLogUpdate(u'领取礼包会在相应时间点进行，请等待..')
         thread.start_new_thread(self.get_login_gift,())
         e.Skip()
+
+
+
+
+
 
 
     def get_login_gift(self):
@@ -1036,11 +1385,43 @@ class AccountManage(wx.Panel):
                     except:
                         pass
             constant.NEWCODE = ''
+        wx.CallAfter(self.operateLogUpdate,u'登陆完成')
 
+
+        thread.start_new_thread(self.account_keep_live,())
         self.codeImage.Show(False)
         self.codeLabel.Show(False)
         self.codeInput.Show(False)
         self.list_sizer.Layout()
+
+
+    def account_keep_live(self):
+        '''
+        保持小号的心跳
+        :return:
+        '''
+
+        temp_list = self.account_list
+
+        while temp_list[0]==self.account_list[0]:
+            time.sleep(300)
+            logging.info(u'小号活跃了')
+            print u'小号活跃了'
+            for key in self.account_list:
+                if str(key)==str(constant.USERNAME):
+                    print u'账号与大号一样'
+                    continue
+                try:
+                    value =  self.__class__.account_http_dic[key]
+                except KeyError:
+                    continue
+                base_url = commons.getUrl(constant.CARDLOGINURL,value)
+                postData = {
+                                       'code':'',
+                                       'uin':str(key)
+                    }
+                value.get_response(base_url,postData)
+
 
     #获取对应的url
     def getUrl(self,myHttpRequest,url):
@@ -1100,7 +1481,11 @@ class AccountManage(wx.Panel):
         randomNum = commons.getRandomNum(4)
         base_url = base_url.replace('UIN', username)
         base_url = base_url.replace('RANDOM','0.'+randomNum)
-        response = myHttpRequest.get_response(base_url)
+        try:
+            response = myHttpRequest.get_response(base_url)
+        except :
+            response = myHttpRequest.get_response(base_url)
+
         page_content = response.read().decode('utf-8')
         print page_content
         isNeedCode = int(page_content[13:-2].split(',')[0][1:-1])

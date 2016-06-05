@@ -33,7 +33,7 @@ DEFAULTBYCARDID= 329
 ISSALEOFFCARD = 0
 MOJINGDICT = {'add_cmj':u'橙魔晶','add_hmj':u'红魔晶','add_zmj':u'紫魔晶'}
 GIFTDICT = {'2':u'升炉卡','3':u'开箱卡','4':u'小魔瓶','5':u'中魔瓶','6':u'大魔瓶','7':u'100面值卡','8':u'200面值卡','9':u'抽卡包','10':u'600面值卡','12':u'租炉卡7天',
-            '13':u'租炉卡3天','43':u'幸运卡','44':u'金币','45':u'经验','46':u'五彩石','51':u'橙魔晶','52':u'红魔晶','53':u'紫魔晶','55':u'魔力'}
+            '13':u'租炉卡3天','43':u'幸运卡','44':u'金币','45':u'经验','46':u'五彩石','47':u'金粉','51':u'橙魔晶','52':u'红魔晶','53':u'紫魔晶','55':u'魔力','56':u'碎片','57':u'灵力果','58':u'藏宝图','59':u'金钥匙'}
 #搜索的卡友数目
 CARDUSERNUM = 100
 #是否更新数据库
@@ -61,6 +61,10 @@ ZCGINFOURL = r'http://card.show.qq.com/cgi-bin/card_user_zcg?g_tk=GTK'
 SENDCARD = r'http://hydra.qzone.qq.com/cgi-bin/freegift/freegift_send?g_tk=GTK'
 ACTEGG = r'http://card.show.qq.com/cgi-bin/card_act_get_free?g_tk=GTK'
 
+
+
+
+KNOCKEGG = r'http://card.show.qq.com/cgi-bin/card_act_pay?g_tk=GTK'
 ISNEEDCODEURL2 = r'http://check.ptlogin2.qq.com/check?pt_tea=1&uin=UIN&appid='+APPID2+'&ptlang=2052&r=RANDOM'#APP2
 ISNEEDCODEURL3 = r'http://check.ptlogin2.qq.com/check?pt_tea=1&uin=UIN&appid='+APPID3+'&ptlang=2052&r=RANDOM'#APP2
 ISNEEDCODEURL = r'http://check.ptlogin2.qq.com/check?uin=UIN&regmaster=&appid='+APPID+'&ptlang=2052&pt_tea=1&login_sig=&r=RANDOM '
@@ -90,16 +94,26 @@ REGISTERMAGICCARD = r'http://card.show.qq.com/cgi-bin/card_user_register?g_tk=GT
 MAGICCARDGUIDE = r'http://card.show.qq.com/cgi-bin/card_user_guide_report?g_tk=GTK'
 MAGICCOMMLETEMISSION = r'http://card.show.qq.com/cgi-bin/card_mission_complete?g_tk=GTK'
 MOBILEMAINPAGE = r'http://mfkp.qzapp.z.qq.com/qshow/cgi-bin/wl_card_mainpage?g_f=19011&sid=SID'
-#BxiIOTtHcDP6ISg6g3WPOO5dPtbxHl1Mbeaab4550201%3d%3d
 MOBILEREFINEDCARD = r'http://mfkp.qzapp.z.qq.com/qshow/cgi-bin/wl_card_refinedcard_get?sid=SID&target_id='
 MOBILELIANCARD = r'http://mfkp.qzapp.z.qq.com/qshow/cgi-bin/wl_card_refine?sid=SID&tid=52&fuin=0&steal=0&buy=1&id=62&tt=1&s1=117440513&s2=117440513&s3=117440513&t1=117440514&t2=117440514&t3=117440514'
 GQGETGIFTS = r'http://card.show.qq.com/cgi-bin/card_act_get_gifts?g_tk=GTK'
 GQACTIVITY = r'http://card.show.qq.com/cgi-bin/card_task_activity??g_tk=GTK'
 LEVELUP = r'http://card.show.qq.com/cgi-bin/card_user_levelup_bonus?g_tk=GTK'
-
+USERSHARE = r'http://card.show.qq.com/cgi-bin/card_user_share_info?g_tk=GTK'
+USERSHAREGET = r'http://card.show.qq.com/cgi-bin/card_user_share_get?g_tk=GTK'
+SELLCARD = r'http://mfkp.qzapp.z.qq.com/qshow/cgi-bin/wl_card_sell?sid=&all=1'
+EXCHANGECARD = r'http://card.show.qq.com/cgi-bin/card_user_exchangecard?g_tk=GTK'
+SETTHEME = r'http://card.show.qq.com/cgi-bin/card_user_exchangable_theme_set?g_tk=GTK'
+DIGCARD = r'http://card.show.qq.com/cgi-bin/card_act_dig?g_tk=GTK'
+PETEXPLORE = r'http://card.show.qq.com/cgi-bin/card_user_spirite?g_tk=GTK'
+MIAOKAURL = r'http://card.show.qq.com/cgi-bin/card_stove_accelerate?g_tk=GTK'
+KEY = 'xiongxiong'
+ONEKEYDRAWCARD = r''
 SEARCHTHEMEID = 204
 EXCHANGEBOX = 0
 STOREBOX = 1
 STOVEBOX = 2
+MAGICCARDID = 29
 ZCG = 3
 MESSAGE = []
+VERSION = '3.9.3'
