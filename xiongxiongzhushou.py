@@ -2,21 +2,21 @@
 from commonlib import myhttp
 from commonlib import constant
 from commonlib import Tea
-import  re,wx
+import re
+import wx
 import mythread.myThread as myThread
 import thread
 import main
 import commonlib.carddatabase as carddatabase
-import os,sys,ConfigParser
-import StringIO,base64
+import sys
+import ConfigParser
+import os
+import base64
+import StringIO
 import ctypes
 
 
 class MyLogin(wx.Frame):
-
-
-
-
 
     def __init__(self, parent, title):
         wx.Frame.__init__(self, parent, title=title, size=(800,300))
@@ -25,66 +25,61 @@ class MyLogin(wx.Frame):
         self.isNeedCode =0
         self.loginCode = ''
         self.myHttpRequest = myhttp.MyHttpRequest()
-        
-        #if not  os.path.exists(constant.DATABASE):
-
-         #-------------用户信息----------
+        # if not  os.path.exists(constant.DATABASE):
+        # -------------用户信息----------
         self.horizontalSizer = wx.BoxSizer(wx.HORIZONTAL)
         self.myImage=wx.StaticBitmap(self, -1,  pos=(30,50), size=(200,177))
         bmp=wx.Bitmap("bear.png", wx.BITMAP_TYPE_PNG)
         self.myImage.SetBitmap(bmp)
         self.userInfoSizer = wx.BoxSizer(wx.VERTICAL)
         self.qqSizer = wx.BoxSizer(wx.HORIZONTAL)
-        self.tidLabel = wx.StaticText(self,-1,u'QQ')#-1的意义为id由系统分配
+        self.tidLabel = wx.StaticText(self, -1, u'QQ')
+        # -1的意义为id由系统分配
         self.tidInput = wx.TextCtrl(self,-1)
         self.tidInput.Bind(wx.EVT_KILL_FOCUS, self.OnKillFocus)
         self.tidInput.Bind(wx.EVT_KEY_DOWN, self.OnChar)
-        self.qqSizer.Add(self.tidLabel,0,wx.ALL,10)
-        self.qqSizer.Add(self.tidInput,0,wx.ALL,10)
+        self.qqSizer.Add(self.tidLabel, 0, wx.ALL,10)
+        self.qqSizer.Add(self.tidInput, 0, wx.ALL,10)
         self.passwordSizer = wx.BoxSizer(wx.HORIZONTAL)
-        self.aidLabel = wx.StaticText(self,-1,u'密码')
+        self.aidLabel = wx.StaticText(self, -1, u'密码')
         self.aidInput = wx.TextCtrl(self,-1,style=wx.TE_PASSWORD)
-        self.passwordSizer.Add(self.aidLabel,0,wx.ALL,10)
-        self.passwordSizer.Add(self.aidInput,0,wx.ALL,10)
+        self.passwordSizer.Add(self.aidLabel, 0, wx.ALL, 10)
+        self.passwordSizer.Add(self.aidInput, 0, wx.ALL, 10)
         self.codeSizer = wx.BoxSizer(wx.HORIZONTAL)
         self.codeImage=wx.StaticBitmap(self, -1,  pos=(30,50), size=(150,80))
-        self.codeInput = wx.TextCtrl(self,-1)
+        self.codeInput = wx.TextCtrl(self, -1)
         self.codeInput.Show(False)
         self.codeImage.Show(False)
-        self.codeSizer.Add(self.codeImage,0,wx.ALL,10)
-        self.codeSizer.Add(self.codeInput,0,wx.ALL,10)
+        self.codeSizer.Add(self.codeImage, 0, wx.ALL, 10)
+        self.codeSizer.Add(self.codeInput, 0, wx.ALL, 10)
         self.loginSizer = wx.BoxSizer(wx.HORIZONTAL)
-        self.loginButton = wx.Button(self,-1,u'登陆')
+        self.loginButton = wx.Button(self, -1, u'登陆')
         self.Bind(wx.EVT_BUTTON, self.loginQQ, self.loginButton)
-        self.tipLabel = wx.StaticText(self,-1,u'正在更新数据库，请稍后点击登陆')
-        self.tipLabel.SetForegroundColour((255,0,0))
-        self.codeSizer.Add(self.loginButton,0,wx.ALL,10)
-        self.codeSizer.Add(self.tipLabel,0,wx.ALL,10)
-        self.userInfoSizer.Add(self.qqSizer,0,wx.ALL,10)
-        self.userInfoSizer.Add(self.passwordSizer,0,wx.ALL,10)
-        self.userInfoSizer.Add(self.codeSizer,0,wx.TOP,10)
-        self.userInfoSizer.Add(self.loginSizer,0,wx.ALL,10)
-
-
+        self.tipLabel = wx.StaticText(self, -1, u'正在更新数据库，请稍后点击登陆')
+        self.tipLabel.SetForegroundColour((255, 0, 0))
+        self.codeSizer.Add(self.loginButton, 0, wx.ALL, 10)
+        self.codeSizer.Add(self.tipLabel, 0, wx.ALL, 10)
+        self.userInfoSizer.Add(self.qqSizer, 0, wx.ALL, 10)
+        self.userInfoSizer.Add(self.passwordSizer, 0, wx.ALL, 10)
+        self.userInfoSizer.Add(self.codeSizer, 0, wx.TOP, 10)
+        self.userInfoSizer.Add(self.loginSizer, 0, wx.ALL, 10)
         self.horizontalSizer.Add(self.myImage,wx.EXPAND)
         self.horizontalSizer.Add(self.userInfoSizer,wx.EXPAND)
-        #---------------总体布局----------
+        # ---------------总体布局----------
         self.sizer = wx.BoxSizer(wx.VERTICAL)
         self.sizer.Add(self.horizontalSizer, 0, wx.EXPAND)
-        #Layout sizers
+        # Layout sizers
         self.SetSizer(self.sizer)
         self.SetAutoLayout(1)
         '''显示在屏幕中间
         '''
         self.Center()
         self.Show(True)
-
-
         config = ConfigParser.ConfigParser()
         try:
             config.read('user_info.ini')
-            constant.USERNAME = config.get('userinfo','username')
-            constant.PASSWORD = config.get('userinfo','password')
+            constant.USERNAME = config.get('userinfo', 'username')
+            constant.PASSWORD = config.get('userinfo', 'password')
             constant.USERNAME = base64.decodestring(constant.USERNAME)
             constant.PASSWORD = base64.decodestring(constant.PASSWORD)
             self.tidInput.SetValue(constant.USERNAME)
@@ -104,15 +99,15 @@ class MyLogin(wx.Frame):
         except :
             configFile = ConfigParser.ConfigParser()
             configFile.add_section("MagicCardConfig")
-            configFile.set("MagicCardConfig","searchCardNum",constant.CARDUSERNUM)
-            configFile.set("MagicCardConfig","isUpdateDB",1)
-            configFile.set("MagicCardConfig","isSaleOffCard",0)
-            configFile.set("MagicCardConfig","isCommitByWeb",1)
-            configFile.set("MagicCardConfig","isCompleteCommit",0)
-            configFile.set("MagicCardConfig","isSearchStealFriend",0)
-            configFile.write(open('config.ini','w'))
-        if constant.ISUPDATEDB ==1 :
-            thread.start_new_thread(self.readFile,(1,))
+            configFile.set("MagicCardConfig", "searchCardNum", constant.CARDUSERNUM)
+            configFile.set("MagicCardConfig", "isUpdateDB", 1)
+            configFile.set("MagicCardConfig", "isSaleOffCard", 0)
+            configFile.set("MagicCardConfig", "isCommitByWeb", 1)
+            configFile.set("MagicCardConfig", "isCompleteCommit", 0)
+            configFile.set("MagicCardConfig", "isSearchStealFriend", 0)
+            configFile.write(open('config.ini', 'w'))
+        if constant.ISUPDATEDB == 1:
+            thread.start_new_thread(self.readFile, (1,))
         else:
             self.database = carddatabase.CardDataBase(self.cur_file_dir())
             self.tipLabel.SetLabel(u'更新完成，请登陆')
@@ -124,7 +119,7 @@ class MyLogin(wx.Frame):
             constant.USERNAME = int(self.tidInput.GetValue())
         except ValueError:
             pass;
-        getCodethread = myThread.GetCodePicThread(self,self.myHttpRequest,constant.USERNAME)
+        getCodethread = myThread.GetCodePicThread(self, self.myHttpRequest, constant.USERNAME)
         getCodethread.start()
         e.Skip()
 
@@ -140,9 +135,9 @@ class MyLogin(wx.Frame):
             self.aidInput.SetFocus()
         e.Skip()
     
-    #显示验证码 图片
-    def showTheCodePic(self,msg):
-        if msg==0:
+    # 显示验证码 图片
+    def showTheCodePic(self, msg):
+        if msg == 0:
             self.codeImage.Show(False)
             self.codeInput.Show(False)
             self.sizer.Layout()
@@ -172,13 +167,6 @@ class MyLogin(wx.Frame):
                 pass
         except Exception:
             print 'file can not find'
-
-
-
-
-
-
-        print
 
         verifysession = ''
         if self.codeInput.IsShown():
@@ -297,8 +285,6 @@ class MyLogin(wx.Frame):
         self.database = carddatabase.CardDataBase(self.cur_file_dir())
         self.tipLabel.SetLabelText(u'更新完成，请登陆')
 
-
-
     def get_code(self):
         '''
         获取验证信息
@@ -307,27 +293,24 @@ class MyLogin(wx.Frame):
         getCodethread = myThread.GetCodePicThread(self,self.myHttpRequest,constant.USERNAME)
         getCodethread.start()
 
-    #获取脚本文件的当前路径
+    # 获取脚本文件的当前路径
     def cur_file_dir(self):
         path = sys.path[0]
-        #判断为脚本文件还是py2exe编译后的文件，如果是脚本文件，则返回的是脚本的目录，如果是py2exe编译后的文件，则返回的是编译后的文件路径
+        # 判断为脚本文件还是py2exe编译后的文件，如果是脚本文件，则返回的是脚本的目录，如果是py2exe编译后的文件，则返回的是编译后的文件路径
         if os.path.isdir(path):
             return path+"\\"
         elif os.path.isfile(path):
             return os.path.dirname(path)+"\\"   
     
-    #获取对应的url  
-    def getUrl(self,url):
+    # 获取对应的url
+    def getUrl(self, url):
         skey = ''
         for ck in self.myHttpRequest.cj:
-                if ck.name=='skey':
+                if ck.name == 'skey':
                     skey = ck.value
         base_url = url
         base_url = base_url.replace('GTK', str(Tea.getGTK(skey)))
         return base_url
-
-
-
 
 app = wx.App(False)
 frame = MyLogin(None, u"熊熊助手")

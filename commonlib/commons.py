@@ -10,7 +10,8 @@ import constant,logging
 import socket
 import struct
 import time
-import win32api,json
+# import win32api,
+import json
 
 from bs4 import BeautifulSoup
 
@@ -290,32 +291,33 @@ def getTime():
 
 def setSystemTime():
     tm_year, tm_mon, tm_mday, tm_hour, tm_min, tm_sec, tm_wday, tm_yday, tm_isdst = time.gmtime(getTime())
-    win32api.SetSystemTime(tm_year, tm_mon, tm_wday, tm_mday, tm_hour, tm_min, tm_sec, 0)
+    # win32api.SetSystemTime(tm_year, tm_mon, tm_wday, tm_mday, tm_hour, tm_min, tm_sec, 0)
 
 import re
 
+
 def getPrizeInfo(page_content):
     result = ''
-    card_list =  re.findall('(\d+)_(.*?)_(\d+)',page_content,re.S)
+    card_list = re.findall('(\d+)_(.*?)_(\d+)', page_content, re.S)
     for list_item in card_list:
         if list_item[0] in constant.GIFTDICT:
             result += constant.GIFTDICT[list_item[0]]+'*'+list_item[2]
-        elif list_item[0] =='48':
-            if list_item[1]=='19':
-                result+=u'积分'+'*'+list_item[2]
-            elif list_item[1]=='14':
-                result+= u'7天租铺卡'+'*'+list_item[2]
-            elif list_item[1]=='8':
-                result+= u'3天累计卡'+'*'+list_item[2]
-            elif list_item[1]=='17':
-                result+= u'3天经验卡'+'*'+list_item[2]
-            elif list_item[1]=='18':
-                result+= u'7天经验卡'+'*'+list_item[2]
-            elif list_item[1]=='16':
-                result+= u'加速卡'+'*'+list_item[2]
+        elif list_item[0] == '48':
+            if list_item[1] == '19':
+                result += u'积分'+'*'+list_item[2]
+            elif list_item[1] == '14':
+                result += u'7天租铺卡'+'*'+list_item[2]
+            elif list_item[1] == '8':
+                result += u'3天累计卡'+'*'+list_item[2]
+            elif list_item[1] == '17':
+                result += u'3天经验卡'+'*'+list_item[2]
+            elif list_item[1] == '18':
+                result += u'7天经验卡'+'*'+list_item[2]
+            elif list_item[1] == '16':
+                result += u'加速卡'+'*'+list_item[2]
             else:
-                result+= u'未知',list_item
-        result+=','
+                result += u'未知', list_item
+        result += ','
     return result
 
 def getPetExplorePrize(page_content):

@@ -38,18 +38,18 @@ class TestListCtrl(wx.ListCtrl, listmix.CheckListCtrlMixin, listmix.ListCtrlAuto
     def MenuSelectionCb(self, event ):
             print event.GetId()
 
-            if 1==event.GetId():
+            if 1 == event.GetId():
                 postData = {
-                                   'code':'',
-                                   'uin':self.selectAccount
+                                   'code': '',
+                                   'uin': self.selectAccount
                 }
                 try:
                     self.myHttpRequest = self.windows.account_http_dic[self.selectAccount]
                     self.windows.current_account = self.selectAccount
                     self.windows.myHttpRequest = self.myHttpRequest
-                    base_url =  self.getUrl(constant.CARDLOGINURL)
-                    page_content = self.myHttpRequest.get_response(base_url,postData)
-                    self.magicCardInfo= page_content.read()
+                    base_url = self.getUrl(constant.CARDLOGINURL)
+                    page_content = self.myHttpRequest.get_response(base_url, postData)
+                    self.magicCardInfo = page_content.read()
                     self.getBoxInfo()
                 except KeyError:
                     self.windows.operateLogUpdate(u'获取卡箱信息失败,请检查该账号是否登录')
@@ -229,16 +229,16 @@ class AccountManage(wx.Panel):
             self.sloveBoxList.InsertColumn(col,text)
             self.sloveBoxList.SetColumnWidth(col,100)
 
-        #-------------换卡箱----------
+        # -------------换卡箱----------
         self.exchangesb  = wx.StaticBox(self,label = u'换卡箱')
         self.exchangeBoxSizer = wx.StaticBoxSizer(self.exchangesb,wx.VERTICAL)
-        #添加一个列表控件 style使用报表的模式 并且插入头
+        # 添加一个列表控件 style使用报表的模式 并且插入头
         self.exchangeBoxlist = TestListCtrl2(self,style=wx.LC_REPORT)
         self.exchangeBoxlist.SetBackgroundColour((227,237,205))
         for col,text in enumerate (self.exchangeBoxlistHead):
             self.exchangeBoxlist.InsertColumn(col,text)
         self.exchangeBoxlist.Arrange()
-        #-------------换卡箱按钮的集合----------
+        # -------------换卡箱按钮的集合----------
         self.exchangeBoxButtonSize = wx.BoxSizer(wx.HORIZONTAL)
         self.inputSafeBox = wx.Button(self,-1,u'放入保险箱')
         self.saleSelectCard = wx.Button(self,-1,u'出售勾选卡片')
@@ -248,12 +248,10 @@ class AccountManage(wx.Panel):
         self.exchangeBoxButtonSize.Add(self.saleSelectCard,0,wx.ALL,5)
         self.exchangeBoxSizer.Add(self.exchangeBoxlist,0,wx.ALL,5)
         self.exchangeBoxSizer.Add(self.exchangeBoxButtonSize,0,wx.ALL,5)
-
-
-        #------------保险箱---------------------
+        # ------------保险箱---------------------
         self.safeSB  = wx.StaticBox(self,label = u'保险箱')
         self.safeBoxSizer = wx.StaticBoxSizer(self.safeSB,wx.VERTICAL)
-        #添加一个列表控件 style使用报表的模式 并且插入头
+        # 添加一个列表控件 style使用报表的模式 并且插入头
         # self.safeBoxLabel = wx.StaticText(self,-1,u'0/0')
         self.safeBoxlist = TestListCtrl2(self,style=wx.LC_REPORT)
         self.safeBoxlist.SetBackgroundColour((227,237,205))
@@ -264,9 +262,7 @@ class AccountManage(wx.Panel):
         # self.safeBoxSizer.Add(self.safeBoxLabel,0,wx.ALL,0)
         self.safeBoxSizer.Add(self.safeBoxlist,0,wx.ALL,5)
         self.safeBoxSizer.Add(self.inputExchangeBox,0,wx.ALL,5)
-
-
-        #-----------------总布局
+        # -----------------总布局
         self.horizontal= wx.BoxSizer(wx.HORIZONTAL)
         self.vertical1= wx.BoxSizer(wx.VERTICAL)
         self.vertical2= wx.BoxSizer(wx.VERTICAL)
@@ -279,8 +275,7 @@ class AccountManage(wx.Panel):
         self.list_sizer.Add(self.button_sizer,0,wx.ALL,5)
         self.list_sizer.Add(self.reload_config_file,0,wx.ALL,5)
         self.list_sizer.Add(self.horizontal,0,wx.ALL,5)
-        #---------------------------
-
+        # ---------------------------
         self.SetSizer(self.list_sizer)
         self.SetAutoLayout(1)
         self.Center()
@@ -1151,54 +1146,69 @@ class AccountManage(wx.Panel):
                     break
         wx.CallAfter(self.operateLogUpdate,u'一键任务完成')
 
-
     def common_activity(self):
-        activity_name =  self.account_choice.GetStringSelection().encode('gbk')
-        url =  self.config.get(activity_name,'url')
-        post_data = self.config.get(activity_name,'postdata')
-        repeat_count = int(self.config.getint(activity_name,'repeatTime'))
-        card_prize = self.config.getint(activity_name,'CardIsPrize')
-        magic_prize = self.config.getint(activity_name,'MagicIsPrize')
-        pet_prize = 0
+        activity_name = self.account_choice.GetStringSelection().encode('gbk')
+        url = self.config.get(activity_name, 'url')
+        post_data = self.config.get(activity_name, 'postdata')
+        repeat_count = int(self.config.getint(activity_name, 'repeatTime'))
+        card_prize = self.config.getint(activity_name, 'CardIsPrize')
+        # magic_prize = self.config.getint(activity_name, 'MagicIsPrize')
+
+        out_put = ''
         try:
-            pet_prize = self.config.getint(activity_name,'PetIsPrize')
-        except:
+            out_put = self.config.get(activity_name, 'output')
+        except ConfigParser.NoOptionError:
             pass
-        print url
-        print post_data
+
         url_list = url.split(';')
         post_list = post_data.split(';')
-        print post_list
+
         for key in self.account_list:
             try:
-                value =  self.__class__.account_http_dic[key]
+                value = self.__class__.account_http_dic[key]
             except KeyError:
                 continue
             # base_url = commons.getUrl(url,value)
             for i in range(repeat_count):
-                for j,url_info in enumerate(url_list):
-                    url_info = commons.getUrl(url_info,value,key)
+                for j, url_info in enumerate(url_list):
+                    url_info = commons.getUrl(url_info, value, key)
                     if 'QQ' in post_list[j]:
-                        post_content = post_list[j].replace('QQ',key)
+                        post_content = post_list[j].replace('QQ', key)
                     else:
                         post_content = post_list[j]
                     page_content = value.get_response(url_info,eval(post_content)).read()
-                    print page_content
+                    logging.info(page_content)
                     if 'sucess' in page_content or 'code="0"' in page_content:
-                        if magic_prize==1:
-                            result = commons.getPrizeInfo(page_content)
-                            wx.CallAfter(self.operateLogUpdate,str(key)+u'结果为:'+result)
-                        elif card_prize==1:
-                            result = commons.getCardPrize(self.database,page_content)
-                            wx.CallAfter(self.operateLogUpdate,str(key)+u'结果为:'+result)
-                        elif pet_prize ==1:
-                            result = commons.getPetExplorePrize(page_content)
-                            wx.CallAfter(self.operateLogUpdate,str(key)+u'结果为:'+result)
+                        # if magic_prize == 1:
+                        #     result = commons.getPrizeInfo(page_content)
+                        #     wx.CallAfter(self.operateLogUpdate, str(key) + u'结果为:'+result)
+                        # elif card_prize == 1:
+                        #     result = commons.getCardPrize(self.database, page_content)
+                        #     wx.CallAfter(self.operateLogUpdate, str(key) + u'结果为:'+result)
+                        # elif pet_prize == 1:
+                        #     result = commons.getPetExplorePrize(page_content)
+                        #     wx.CallAfter(self.operateLogUpdate, str(key) + u'结果为:'+result)
+                        if card_prize == 1:
+                            result = commons.getCardPrize(self.database, page_content)
+                            wx.CallAfter(self.operateLogUpdate, str(key) + u'结果为:'+result)
+                        elif out_put != '':
+                            try:
+                                out_put_list = out_put.split('&&')
+                                result_dic = json.loads(page_content)
+                                for out_put_item in out_put_list:
+                                    out_put_item_list = out_put_item.split('#')
+                                    if out_put_item_list[0] in result_dic:
+                                        wx.CallAfter(self.operateLogUpdate, str(key) + u'结果为:' +
+                                                     out_put_item_list[1] + ':' + str(result_dic[out_put_item_list[0]]))
+
+                            except ValueError:
+                                wx.CallAfter(self.operateLogUpdate, str(key) + u'执行结果成功,但设定的字段未找到')
+                                pass
                         else:
-                            wx.CallAfter(self.operateLogUpdate,str(key)+u'执行结果成功')
+                            wx.CallAfter(self.operateLogUpdate, str(key) + u'执行结果成功')
                     else:
-                        wx.CallAfter(self.operateLogUpdate,str(key)+u'失败')
-        wx.CallAfter(self.operateLogUpdate,u'一键任务完成')
+                        wx.CallAfter(self.operateLogUpdate,str(key) + u'失败')
+        wx.CallAfter(self.operateLogUpdate, u'一键任务完成')
 
         pass
 
@@ -1337,16 +1347,16 @@ class AccountManage(wx.Panel):
         print self.sloveBoxList.account_select
         i = -1
         for key in self.account_list:
-            value =  self.account_dic[key]
-            i +=1
+            value = self.account_dic[key]
+            i += 1
             if 1 in self.sloveBoxList.account_select:
-                if self.sloveBoxList.account_select[i]!=1:
+                if self.sloveBoxList.account_select[i] != 1:
                     continue
             my_http_request = myhttp.MyHttpRequest()
             repeat = True
             page_content = ''
             while repeat:
-                if self.getCode(my_http_request,key)==1:
+                if self.getCode(my_http_request, key) == 1:
                     base_url = constant.CODEPIC2
                     randomNum = commons.getRandomNum(4)
                     base_url = base_url.replace('UIN', str(key))
@@ -1355,37 +1365,38 @@ class AccountManage(wx.Panel):
                     page_content = my_http_request.get_response(base_url).read()
                     self.show_image_code(page_content)
 
-                    while constant.NEWCODE=='':
+                    while constant.NEWCODE == '':
                         time.sleep(1)
-                    if constant.NEWCODE=='CLOSE':
+
+                    if constant.NEWCODE == 'CLOSE':
                         break
                     verifysession = ''
                     for ck in my_http_request.cj:
-                        if ck.name=='verifysession':
+                        if ck.name == 'verifysession':
                             verifysession = ck.value
 
-                    repeat,page_content = self.loginQQ(my_http_request,key,value,verifysession,constant.NEWCODE)
+                    repeat, page_content = self.loginQQ(my_http_request, key, value, verifysession, constant.NEWCODE)
                     self.show_image_code(0)
-                    constant.NEWCODE=''
-                    if repeat==-2:
-
+                    constant.NEWCODE = ''
+                    if repeat == -2:
                         break
                 else:
-                    repeat,page_content = self.loginQQ(my_http_request,key,value,str(constant.SESSION),str(constant.CODE))
+                    repeat, page_content = self.loginQQ(my_http_request, key, value, str(constant.SESSION), str(constant
+                                                                                                                .CODE))
                     pass
             self.__class__.account_http_dic[key] = my_http_request
-            if constant.NEWCODE!='CLOSE':
-                if repeat==-2:
-                    wx.CallAfter(self.update_list,i,3,u'账号冻结')
+            if constant.NEWCODE != 'CLOSE':
+                if repeat == -2:
+                    wx.CallAfter(self.update_list, i, 3, u'账号冻结')
                 else:
-                    wx.CallAfter(self.update_list,i,3,u'登陆成功')
+                    wx.CallAfter(self.update_list, i, 3, u'登陆成功')
                     try:
-                        result  = re.findall('\'1\',\'(.*?)\', \'(.*?)\'',page_content,re.S)
-                        wx.CallAfter(self.update_list,i,2,result[0][1])
+                        result = re.findall('\'1\',\'(.*?)\', \'(.*?)\'', page_content, re.S)
+                        wx.CallAfter(self.update_list, i, 2, result[0][1])
                     except:
                         pass
             constant.NEWCODE = ''
-        wx.CallAfter(self.operateLogUpdate,u'登陆完成')
+        wx.CallAfter(self.operateLogUpdate, u'登陆完成')
 
 
         thread.start_new_thread(self.account_keep_live,())
@@ -1417,13 +1428,12 @@ class AccountManage(wx.Panel):
                     continue
                 base_url = commons.getUrl(constant.CARDLOGINURL,value)
                 postData = {
-                                       'code':'',
-                                       'uin':str(key)
+                                       'code': '',
+                                       'uin': str(key)
                     }
-                value.get_response(base_url,postData)
+                value.get_response(base_url, postData)
 
-
-    #获取对应的url
+    # 获取对应的url
     def getUrl(self,myHttpRequest,url):
          skey = ''
          for ck in myHttpRequest.cj:
@@ -1433,18 +1443,16 @@ class AccountManage(wx.Panel):
          base_url = base_url.replace('GTK', str(Tea.getGTK(skey)))
          return base_url
 
-
-    def loginQQ(self,my_http_request,key,value,verifysession,code):
+    def loginQQ(self, my_http_request, key, value, verifysession, code):
         # constant.PASSWORD = str(value)
-        password = Tea.getTEAPass(int(key),str(value),code)
+        password = Tea.getTEAPass(int(key), str(value), code)
         base_url = constant.QQLOGINURL
         base_url = base_url.replace('USERNAME', str(key))
         base_url = base_url.replace('VERIFYSESSION', verifysession)
-        base_url = base_url.replace('PASSWORD',password)
-        base_url = base_url.replace('CODE',code)
+        base_url = base_url.replace('PASSWORD', password)
+        base_url = base_url.replace('CODE', code)
         page_content = my_http_request.get_response(base_url).read().decode('utf-8')
         logging.info(page_content)
-        print page_content
         if u'暂时' in page_content:
             return -2,page_content
 
@@ -1458,11 +1466,8 @@ class AccountManage(wx.Panel):
             return False,page_content
 
     def show_image_code(self,image):
-
-         # dialog = MyDialog(image)
-         # dialog.ShowModal()
-
-        if image==0:
+        # 是否隐藏验证码的现实
+        if image == 0:
             self.codeImage.Show(False)
             self.codeLabel.Show(False)
             self.codeInput.Show(False)
@@ -1476,11 +1481,11 @@ class AccountManage(wx.Panel):
             self.codeImage.SetBitmap(Image)
 
 
-    def getCode(self,myHttpRequest,username):
+    def getCode(self, myHttpRequest, username):
         base_url = constant.ISNEEDCODEURL2
         randomNum = commons.getRandomNum(4)
         base_url = base_url.replace('UIN', username)
-        base_url = base_url.replace('RANDOM','0.'+randomNum)
+        base_url = base_url.replace('RANDOM', '0.'+randomNum)
         try:
             response = myHttpRequest.get_response(base_url)
         except :
@@ -1490,7 +1495,7 @@ class AccountManage(wx.Panel):
         print page_content
         isNeedCode = int(page_content[13:-2].split(',')[0][1:-1])
         self.code = ''
-        if isNeedCode==0:
+        if isNeedCode == 0:
             constant.CODE = page_content[13:-2].split(',')[1][1:-1]
             constant.SESSION = str(page_content[13:-2].split(',')[3][1:-1])
         else:

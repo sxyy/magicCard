@@ -71,6 +71,7 @@ class GetInfoThread(threading.Thread):
         self.end_time_list = []
 
         if self.flag==constant.EXCHANGEBOX:
+
             self.childlist = self.soup.changebox.children
             constant.EXCHANGEBOXNUM = int(self.soup.changebox['cur'])
             self.windows.exchangeBox = [0]*constant.EXCHANGEBOXNUM
@@ -80,6 +81,11 @@ class GetInfoThread(threading.Thread):
             self.userInfo.append(self.soup.user['lv'])
             self.userInfo.append(self.soup.user['money'])
             self.userInfo.append(self.soup.user['mana'])
+            # 增加摩卡vip的判断
+            vip_end_time = int(self.soup.vip_data['vip_end'])
+            if vip_end_time > int(time.time()):
+                constant.ISRED = 1
+
         elif self.flag==constant.STOREBOX:
             self.childlist = self.soup.storebox.children
             constant.STOREBOXNUM = int(self.soup.storebox['cur'])
